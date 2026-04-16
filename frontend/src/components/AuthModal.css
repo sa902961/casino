@@ -1,0 +1,19 @@
+.auth-modal { position: relative; }
+.auth-logo { display:flex; align-items:center; gap:14px; margin-bottom:20px; }
+.auth-logo-star { font-size:48px; color:var(--gold); filter:drop-shadow(0 0 12px rgba(255,215,0,0.8)); }
+.auth-logo-title { font-size:22px; font-weight:900; background:linear-gradient(135deg,#FFD700,#FF9500); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+.auth-logo-sub { font-size:13px; color:var(--gray-light); margin-top:2px; }
+.auth-bonus-banner { background:linear-gradient(135deg,rgba(255,215,0,0.12),rgba(255,107,53,0.12)); border:1px solid rgba(255,215,0,0.3); border-radius:var(--radius); padding:10px 16px; font-size:14px; color:var(--gold); margin-bottom:16px; text-align:center; }
+.auth-tabs { display:flex; background:rgba(255,255,255,0.04); border-radius:var(--radius); padding:4px; margin-bottom:20px; gap:4px; }
+.auth-tabs button { flex:1; padding:9px; border-radius:8px; font-size:14px; font-weight:600; background:transparent; color:var(--gray); transition:all 0.2s; cursor:pointer; border:none; }
+.auth-tabs button.active { background:rgba(255,215,0,0.15); color:var(--gold); }
+.auth-form { display:flex; flex-direction:column; gap:14px; }
+.form-group { display:flex; flex-direction:column; gap:7px; }
+.form-group label { font-size:13px; font-weight:600; color:var(--gray-light); }
+.otp-input { font-size:24px; letter-spacing:8px; text-align:center; font-weight:800; }
+.otp-hint { color:var(--cyan); font-size:11px; font-weight:400; }
+.auth-otp-note { font-size:12px; color:var(--gray); text-align:center; padding:8px; background:rgba(0,245,255,0.05); border-radius:8px; border:1px solid rgba(0,245,255,0.1); }
+.auth-switch { margin-top:16px; text-align:center; font-size:14px; color:var(--gray); }
+.switch-btn { background:none; border:none; color:var(--gold); font-weight:700; cursor:pointer; font-size:14px; text-decoration:underline; margin-left:6px; }
+.modal-close { position:absolute; top:14px; right:14px; background:rgba(255,255,255,0.08); border:none; color:var(--gray); width:28px; height:28px; border-radius:50%; font-size:13px; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+.modal-close:hover { color:var(--white); background:rgba(255,255,255,0.15); }

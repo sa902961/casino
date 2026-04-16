@@ -1,0 +1,10 @@
+.crash-display { background:linear-gradient(180deg,#0a0e2a,#05081a); border:2px solid rgba(0,245,255,0.2); border-radius:var(--radius-xl); padding:40px 20px; text-align:center; position:relative; overflow:hidden; min-height:200px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; }
+.crash-bg { position:absolute; inset:0; pointer-events:none; }
+.crash-star { position:absolute; width:2px; height:2px; background:#fff; border-radius:50%; animation:star-twinkle 2s ease-in-out infinite; }
+.crash-mult { font-size:clamp(48px,12vw,80px); font-weight:900; color:var(--cyan); text-shadow:var(--glow-cyan); transition:color 0.3s; }
+.crash-win  { color:var(--green) !important; text-shadow:0 0 20px rgba(0,255,136,0.6) !important; }
+.crash-crash { color:var(--red) !important; text-shadow:0 0 20px rgba(255,59,92,0.6) !important; }
+.crash-rocket { font-size:48px; animation:float 1s ease-in-out infinite; }
+.crash-verdict { font-size:15px; font-weight:700; padding:10px 20px; border-radius:8px; }
+.crash-safe { background:rgba(0,255,136,0.1); color:var(--green); border:1px solid rgba(0,255,136,0.3); }
+.crash-boom { background:rgba(255,59,92,0.1); color:var(--red); border:1px solid rgba(255,59,92,0.3); animation:pulse 0.3s ease; }

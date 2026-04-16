@@ -1,0 +1,7 @@
+.lobby-page { padding-top:calc(var(--nav-height)+8px); padding-bottom:calc(var(--bottom-nav-height)+16px); }
+.lobby-search { margin:12px 0 16px; }
+.lobby-count { font-size:13px; color:var(--gray); margin-bottom:12px; }
+.lobby-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+@media(max-width:480px) { .lobby-grid{grid-template-columns:repeat(2,1fr);gap:10px;} }
+.game-card-glow { position:absolute; inset:0; background:radial-gradient(circle at 50% 80%,rgba(255,215,0,0.08),transparent 60%); pointer-events:none; }
+.lobby-empty { text-align:center; padding:60px 20px; }

@@ -1,0 +1,446 @@
+/* ═══════════════════════════════════════════════════════
+   城星娛樂城 — 全域樣式
+   深色金色霓虹風格，對標星城 Online
+═══════════════════════════════════════════════════════ */
+
+:root {
+  --bg-primary: #0a0e1a;
+  --bg-secondary: #0f1525;
+  --bg-card: #141929;
+  --bg-card-hover: #1a2035;
+  --bg-nav: #0d1220;
+
+  --gold: #FFD700;
+  --gold-dark: #CC9900;
+  --gold-light: #FFE44D;
+  --orange: #FF6B35;
+  --cyan: #00F5FF;
+  --purple: #8B5CF6;
+  --green: #00FF88;
+  --red: #FF3B5C;
+  --white: #FFFFFF;
+  --gray: #8892A4;
+  --gray-light: #B0BAC9;
+
+  --border-gold: 1px solid rgba(255,215,0,0.25);
+  --border-cyan: 1px solid rgba(0,245,255,0.25);
+
+  --glow-gold: 0 0 20px rgba(255,215,0,0.5), 0 0 40px rgba(255,215,0,0.2);
+  --glow-cyan: 0 0 20px rgba(0,245,255,0.5), 0 0 40px rgba(0,245,255,0.2);
+  --glow-orange: 0 0 20px rgba(255,107,53,0.5);
+
+  --shadow-card: 0 4px 24px rgba(0,0,0,0.6);
+  --radius: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+
+  --font: 'Noto Sans TC', 'Microsoft JhengHei', 'PingFang TC', sans-serif;
+  --nav-height: 64px;
+  --bottom-nav-height: 64px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { font-size: 16px; scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg-primary);
+  color: var(--white);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: inherit; text-decoration: none; }
+button { cursor: pointer; border: none; outline: none; font-family: var(--font); }
+input, select, textarea { font-family: var(--font); outline: none; }
+img { max-width: 100%; }
+ul, ol { list-style: none; }
+
+/* ── 捲軸 ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-secondary); }
+::-webkit-scrollbar-thumb { background: var(--gold-dark); border-radius: 3px; }
+
+/* ── 通用按鈕 ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 28px;
+  border-radius: var(--radius);
+  font-size: 15px;
+  font-weight: 700;
+  transition: all 0.2s;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn-gold {
+  background: linear-gradient(135deg, #FFD700, #FF9500);
+  color: #0a0e1a;
+  box-shadow: var(--glow-gold);
+}
+.btn-gold:hover { background: linear-gradient(135deg, #FFE44D, #FFAA22); transform: translateY(-2px); box-shadow: 0 0 30px rgba(255,215,0,0.7); }
+.btn-gold:active { transform: translateY(0); }
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--gold);
+  color: var(--gold);
+}
+.btn-outline:hover { background: rgba(255,215,0,0.1); box-shadow: var(--glow-gold); }
+
+.btn-cyan {
+  background: linear-gradient(135deg, #00F5FF, #0088CC);
+  color: #0a0e1a;
+  box-shadow: var(--glow-cyan);
+}
+.btn-cyan:hover { transform: translateY(-2px); box-shadow: 0 0 30px rgba(0,245,255,0.7); }
+
+.btn-red {
+  background: linear-gradient(135deg, #FF3B5C, #CC2244);
+  color: #fff;
+}
+.btn-red:hover { transform: translateY(-2px); box-shadow: 0 0 20px rgba(255,59,92,0.6); }
+
+.btn-sm { padding: 8px 18px; font-size: 13px; }
+.btn-lg { padding: 16px 40px; font-size: 17px; border-radius: var(--radius-lg); }
+.btn-full { width: 100%; }
+
+.btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+
+/* ── 卡片 ── */
+.card {
+  background: var(--bg-card);
+  border: var(--border-gold);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+/* ── 輸入框 ── */
+.input {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,215,0,0.2);
+  border-radius: var(--radius);
+  color: var(--white);
+  padding: 12px 16px;
+  font-size: 15px;
+  width: 100%;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.input:focus { border-color: var(--gold); box-shadow: 0 0 12px rgba(255,215,0,0.2); }
+.input::placeholder { color: var(--gray); }
+
+/* ── 標籤 ── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.badge-gold { background: rgba(255,215,0,0.15); color: var(--gold); border: 1px solid rgba(255,215,0,0.3); }
+.badge-red { background: rgba(255,59,92,0.15); color: var(--red); border: 1px solid rgba(255,59,92,0.3); }
+.badge-green { background: rgba(0,255,136,0.15); color: var(--green); border: 1px solid rgba(0,255,136,0.3); }
+.badge-cyan { background: rgba(0,245,255,0.15); color: var(--cyan); border: 1px solid rgba(0,245,255,0.3); }
+.badge-purple { background: rgba(139,92,246,0.15); color: var(--purple); border: 1px solid rgba(139,92,246,0.3); }
+
+/* ── 動畫 ── */
+@keyframes fadeIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+@keyframes shimmer { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+@keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+@keyframes glow-pulse { 0%,100% { box-shadow: var(--glow-gold); } 50% { box-shadow: 0 0 40px rgba(255,215,0,0.8), 0 0 80px rgba(255,215,0,0.4); } }
+@keyframes coin-fall {
+  0% { transform: translateY(-60px) rotate(0deg); opacity:1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity:0; }
+}
+@keyframes jackpot-pop {
+  0% { transform: scale(0) rotate(-10deg); opacity:0; }
+  60% { transform: scale(1.2) rotate(5deg); opacity:1; }
+  100% { transform: scale(1) rotate(0deg); opacity:1; }
+}
+@keyframes star-twinkle {
+  0%,100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.3; transform: scale(0.5); }
+}
+@keyframes marquee { from { transform: translateX(100%); } to { transform: translateX(-100%); } }
+@keyframes slide-up { from { transform: translateY(100%); opacity:0; } to { transform: translateY(0); opacity:1; } }
+@keyframes neon-flicker {
+  0%,19%,21%,23%,25%,54%,56%,100% { text-shadow: 0 0 20px var(--gold), 0 0 40px var(--gold); }
+  20%,24%,55% { text-shadow: none; }
+}
+
+.fade-in { animation: fadeIn 0.4s ease forwards; }
+.float { animation: float 3s ease-in-out infinite; }
+.pulse { animation: pulse 2s ease-in-out infinite; }
+.glow-pulse { animation: glow-pulse 2s ease-in-out infinite; }
+
+/* ── 頁面容器 ── */
+.page { padding: calc(var(--nav-height) + 16px) 16px var(--bottom-nav-height); min-height: 100vh; }
+.page-full { padding: 0; }
+
+/* ── 格線 ── */
+.grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+
+@media (max-width: 480px) {
+  .grid-4 { grid-template-columns: repeat(2, 1fr); }
+  .grid-3 { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ── Modal ── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.8);
+  backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  animation: fadeIn 0.2s ease;
+}
+.modal-box {
+  background: var(--bg-card);
+  border: var(--border-gold);
+  border-radius: var(--radius-xl);
+  padding: 32px;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: 0 0 60px rgba(255,215,0,0.15);
+  animation: jackpot-pop 0.3s ease;
+}
+
+/* ── Toast ── */
+.toast {
+  position: fixed;
+  bottom: calc(var(--bottom-nav-height) + 20px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-card);
+  border: 1px solid rgba(255,215,0,0.4);
+  border-radius: 100px;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  z-index: 2000;
+  animation: slide-up 0.3s ease;
+  white-space: nowrap;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.5), var(--glow-gold);
+}
+.toast-win { border-color: var(--green); color: var(--green); box-shadow: 0 4px 24px rgba(0,0,0,0.5), 0 0 20px rgba(0,255,136,0.4); }
+.toast-error { border-color: var(--red); color: var(--red); }
+.toast-info { border-color: var(--cyan); color: var(--cyan); }
+
+/* ── 金幣飄落 ── */
+.coin {
+  position: fixed;
+  font-size: 24px;
+  pointer-events: none;
+  z-index: 1500;
+  animation: coin-fall linear forwards;
+}
+
+/* ── JACKPOT 彈出 ── */
+.jackpot-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1800;
+  flex-direction: column;
+  gap: 24px;
+}
+.jackpot-text {
+  font-size: clamp(48px, 10vw, 96px);
+  font-weight: 900;
+  background: linear-gradient(135deg, #FFD700, #FF9500, #FF3B5C);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: jackpot-pop 0.4s ease, pulse 1s 0.4s ease-in-out infinite;
+  text-shadow: none;
+  filter: drop-shadow(0 0 30px rgba(255,215,0,0.8));
+}
+.jackpot-amount {
+  font-size: clamp(32px, 7vw, 64px);
+  font-weight: 900;
+  color: var(--gold);
+  text-shadow: var(--glow-gold);
+}
+
+/* ── 星光背景 ── */
+.stars-bg {
+  position: fixed; inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+.stars-bg .star {
+  position: absolute;
+  width: 2px; height: 2px;
+  background: var(--white);
+  border-radius: 50%;
+  animation: star-twinkle var(--dur, 3s) ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+
+/* ── 跑馬燈 ── */
+.marquee-wrap {
+  background: rgba(255,215,0,0.08);
+  border-top: 1px solid rgba(255,215,0,0.15);
+  border-bottom: 1px solid rgba(255,215,0,0.15);
+  overflow: hidden;
+  padding: 8px 0;
+}
+.marquee-inner {
+  display: inline-flex;
+  gap: 60px;
+  animation: marquee 30s linear infinite;
+  white-space: nowrap;
+}
+.marquee-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--gold);
+}
+
+/* ── 分頁標籤 ── */
+.tab-bar {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+.tab-bar::-webkit-scrollbar { display: none; }
+.tab-btn {
+  flex-shrink: 0;
+  padding: 8px 20px;
+  border-radius: 100px;
+  font-size: 14px;
+  font-weight: 600;
+  background: rgba(255,255,255,0.05);
+  color: var(--gray-light);
+  border: 1px solid transparent;
+  transition: all 0.2s;
+}
+.tab-btn.active {
+  background: rgba(255,215,0,0.15);
+  color: var(--gold);
+  border-color: rgba(255,215,0,0.4);
+  box-shadow: 0 0 12px rgba(255,215,0,0.2);
+}
+.tab-btn:hover:not(.active) { color: var(--white); background: rgba(255,255,255,0.08); }
+
+/* ── 遊戲卡片 ── */
+.game-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid rgba(255,215,0,0.1);
+  cursor: pointer;
+  transition: transform 0.25s, border-color 0.25s, box-shadow 0.25s;
+  position: relative;
+}
+.game-card:hover {
+  transform: translateY(-4px) scale(1.02);
+  border-color: rgba(255,215,0,0.5);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5), var(--glow-gold);
+}
+.game-card-thumb {
+  width: 100%;
+  aspect-ratio: 3/2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  position: relative;
+  overflow: hidden;
+}
+.game-card-info {
+  padding: 10px 12px 12px;
+}
+.game-card-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 4px;
+}
+.game-card-meta {
+  font-size: 11px;
+  color: var(--gray);
+}
+.game-card-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+.badge-hot { background: var(--red); color: #fff; }
+.badge-new { background: var(--green); color: #000; }
+.badge-jackpot { background: linear-gradient(90deg, #FFD700, #FF9500); color: #000; }
+
+/* ── VIP 等級 ── */
+.vip-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 100px;
+}
+.vip-0 { background: rgba(140,140,140,0.2); color: #aaa; border: 1px solid #555; }
+.vip-1 { background: rgba(205,127,50,0.2); color: #CD7F32; border: 1px solid #CD7F32; }
+.vip-2 { background: rgba(192,192,192,0.2); color: #C0C0C0; border: 1px solid #C0C0C0; }
+.vip-3 { background: rgba(255,215,0,0.2); color: #FFD700; border: 1px solid #FFD700; }
+.vip-4 { background: rgba(0,245,255,0.2); color: #00F5FF; border: 1px solid #00F5FF; }
+.vip-5,.vip-6,.vip-7,.vip-8,.vip-9,.vip-10 {
+  background: linear-gradient(135deg, rgba(139,92,246,0.3), rgba(255,59,92,0.3));
+  color: #E8A0FF;
+  border: 1px solid rgba(139,92,246,0.6);
+}
+
+/* ── 載入動畫 ── */
+.spinner {
+  width: 40px; height: 40px;
+  border: 3px solid rgba(255,215,0,0.15);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto;
+}
+.loading-screen {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 100vh;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── 區塊標題 ── */
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--gold);
+  margin-bottom: 16px;
+}
+.section-title::before {
+  content: '';
+  width: 4px;
+  height: 20px;
+  background: linear-gradient(to bottom, var(--gold), var(--orange));
+  border-radius: 2px;
+  display: block;
+}

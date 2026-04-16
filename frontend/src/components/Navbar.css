@@ -1,0 +1,102 @@
+.navbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: var(--nav-height);
+  background: rgba(10,14,26,0.95);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255,215,0,0.15);
+  z-index: 900;
+}
+.navbar-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 24px;
+}
+.navbar-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+.logo-star {
+  font-size: 28px;
+  color: var(--gold);
+  filter: drop-shadow(0 0 8px rgba(255,215,0,0.8));
+  animation: pulse 2s ease-in-out infinite;
+}
+.logo-text {
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--white);
+  letter-spacing: 1px;
+}
+.logo-text span {
+  color: var(--gold);
+  text-shadow: 0 0 12px rgba(255,215,0,0.5);
+}
+.navbar-links {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+.navbar-links a {
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gray-light);
+  transition: all 0.2s;
+}
+.navbar-links a:hover, .navbar-links a.active {
+  color: var(--gold);
+  background: rgba(255,215,0,0.08);
+}
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+.nav-balance {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,215,0,0.08);
+  border: 1px solid rgba(255,215,0,0.2);
+  border-radius: 100px;
+  padding: 6px 14px;
+}
+.balance-icon { font-size: 16px; }
+.balance-num {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+}
+.nav-user {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  text-decoration: none;
+}
+.nav-username {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--white);
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 768px) {
+  .navbar-links { display: none; }
+  .nav-username { display: none; }
+  .navbar-inner { gap: 12px; }
+}

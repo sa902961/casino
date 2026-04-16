@@ -1,0 +1,22 @@
+/* 撲克牌樣式（共用） */
+.playing-card {
+  display:inline-flex; flex-direction:column; align-items:center; justify-content:center;
+  width:52px; height:72px; background:#fff; border-radius:8px;
+  color:#1a1a2e; font-weight:900; font-size:16px;
+  box-shadow:0 3px 12px rgba(0,0,0,0.5); border:2px solid rgba(255,215,0,0.3);
+  gap:2px;
+}
+.playing-card.red { color:#c0392b; }
+.card-top { font-size:18px; }
+.card-suit { font-size:22px; }
+
+/* 百家樂 */
+.bac-table { display:flex; align-items:center; justify-content:center; gap:20px; margin:8px 0; }
+.bac-side { display:flex; flex-direction:column; align-items:center; gap:8px; }
+.bac-label { font-size:16px; font-weight:800; color:var(--gold); }
+.bac-cards { display:flex; gap:6px; }
+.bac-score { font-size:28px; font-weight:900; color:var(--white); }
+.bac-vs { font-size:20px; font-weight:900; color:var(--gray); }
+.bac-winner { margin-top:12px; padding:10px 20px; border-radius:8px; font-size:16px; font-weight:700; text-align:center; }
+.bac-win  { background:rgba(0,255,136,0.1); color:var(--green); border:1px solid rgba(0,255,136,0.3); }
+.bac-lose { background:rgba(255,59,92,0.1);  color:var(--red);   border:1px solid rgba(255,59,92,0.3);  }

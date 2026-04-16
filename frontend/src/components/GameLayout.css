@@ -1,0 +1,41 @@
+.game-layout { min-height:100vh; display:flex; flex-direction:column; padding-bottom:20px; }
+.game-topbar { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; background:rgba(10,14,26,0.95); border-bottom:1px solid rgba(255,215,0,0.15); position:sticky; top:0; z-index:100; backdrop-filter:blur(8px); }
+.game-back { color:var(--gold); font-size:14px; font-weight:600; text-decoration:none; }
+.game-back:hover { text-shadow:var(--glow-gold); }
+.game-title { font-size:17px; font-weight:800; color:var(--gold); text-shadow:0 0 12px rgba(255,215,0,0.4); }
+.game-balance { font-size:14px; font-weight:700; color:var(--gold); background:rgba(255,215,0,0.08); border:1px solid rgba(255,215,0,0.2); padding:5px 12px; border-radius:100px; }
+.game-balance span { font-variant-numeric:tabular-nums; }
+.game-body { flex:1; max-width:600px; margin:0 auto; width:100%; padding:20px 16px; display:flex; flex-direction:column; gap:20px; }
+
+/* 下注面板通用 */
+.bet-panel { background:var(--bg-card); border:var(--border-gold); border-radius:var(--radius-lg); padding:20px; display:flex; flex-direction:column; gap:14px; }
+.bet-panel h3 { font-size:15px; font-weight:700; color:var(--gold); }
+.bet-amounts { display:flex; flex-wrap:wrap; gap:8px; }
+.bet-chip { padding:8px 14px; border-radius:8px; font-size:13px; font-weight:700; background:rgba(255,215,0,0.08); border:1px solid rgba(255,215,0,0.2); color:var(--gold); cursor:pointer; transition:all 0.15s; }
+.bet-chip.active,.bet-chip:hover { background:rgba(255,215,0,0.25); border-color:var(--gold); box-shadow:0 0 10px rgba(255,215,0,0.3); }
+.bet-input-row { display:flex; gap:10px; align-items:center; }
+.bet-input-row .input { flex:1; }
+.bet-actions { display:flex; gap:10px; }
+.bet-actions button { flex:1; }
+
+/* 結果顯示 */
+.result-box { background:var(--bg-card); border-radius:var(--radius-lg); padding:24px; text-align:center; border:var(--border-gold); animation:fadeIn 0.4s ease; }
+.result-win { border-color:var(--green) !important; box-shadow:0 0 24px rgba(0,255,136,0.2); }
+.result-lose { border-color:rgba(255,59,92,0.3); }
+.result-emoji { font-size:56px; margin-bottom:8px; }
+.result-label { font-size:16px; font-weight:700; color:var(--gray-light); margin-bottom:4px; }
+.result-amount { font-size:36px; font-weight:900; }
+.result-amount.win-color { color:var(--green); text-shadow:0 0 16px rgba(0,255,136,0.5); }
+.result-amount.lose-color { color:var(--red); }
+
+/* 遊戲主體 */
+.game-display { background:var(--bg-card); border:var(--border-gold); border-radius:var(--radius-xl); padding:28px 20px; text-align:center; }
+.play-btn { min-width:160px; position:relative; overflow:hidden; }
+.play-btn::after {
+  content:'';
+  position:absolute; inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent);
+  transform:translateX(-100%);
+  transition:transform 0.4s;
+}
+.play-btn:not(:disabled):hover::after { transform:translateX(100%); }
