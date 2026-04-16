@@ -920,8 +920,13 @@ def game_arena(req: BetReq, u: User = Depends(get_user), db: Session = Depends(g
 @app.get("/leaderboard")
 def get_leaderboard(db: Session = Depends(get_db)):
     users = db.query(User).filter(User.is_admin==0).order_by(User.balance.desc()).limit(20).all()
-    return [{"rank":i+1,"username":u.username,"balance":u.balance,"vip_level":u.vip_level}
-            for i,u in enumerate(users)]
+    result = []
+    for i, u in enumerate(users):
+        total_wins = db.query(func.sum(GameRecord.win)).filter(GameRecord.user_id==u.id).scalar() or 0
+        total_games = db.query(func.count(GameRecord.id)).filter(GameRecord.user_id==u.id).scalar() or 0
+        result.append({"rank":i+1,"username":u.username,"balance":u.balance,
+                       "vip_level":u.vip_level,"total_wins":total_wins,"total_games":total_games})
+    return {"leaderboard": result}
 
 @app.post("/recharge")
 def recharge(req: RechargeReq, u: User = Depends(get_user), db: Session = Depends(get_db)):
@@ -964,10 +969,15 @@ def admin_stats(admin: User = Depends(require_admin), db: Session = Depends(get_
     total_win_amt   = db.query(func.sum(GameRecord.win)).scalar() or 0
     pending_rch     = db.query(RechargeOrder).filter(RechargeOrder.status=="pending").count()
     approved_rch    = db.query(RechargeOrder).filter(RechargeOrder.status=="approved").count()
+    total_recharge = db.query(func.sum(RechargeOrder.amount)).filter(RechargeOrder.status=="approved").scalar() or 0
     return {"total_users":total_users,"total_bets":total_bets,
+            "total_games":total_bets,
             "total_bet_amount":round(total_bet_amt,2),
             "total_win_amount":round(total_win_amt,2),
+            "platform_profit":round(total_bet_amt-total_win_amt,2),
             "house_edge":round(total_bet_amt-total_win_amt,2),
+            "total_recharge":round(total_recharge,2),
+            "pending_orders":pending_rch,
             "pending_recharge":pending_rch,"approved_recharge":approved_rch}
 
 @app.get("/admin/users")
