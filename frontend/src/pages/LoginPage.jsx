@@ -4,7 +4,7 @@ import { useAuth } from '../hooks/useAuth'
 
 export default function LoginPage() {
   const { login } = useAuth()
-  const [tab, setTab] = useState('password') // 'password' | 'otp'
+  const [tab, setTab] = useState('password')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [phone, setPhone] = useState('')
@@ -34,16 +34,9 @@ export default function LoginPage() {
     setLoading(true)
     setError('')
     try {
-      const res = await authAPI.sendOtp(phone)
-      // 自動填入 OTP 並直接登入
-      const autoCode = res.auto_otp
-      setOtp(autoCode)
+      await authAPI.sendOtp(phone)
       setOtpSent(true)
-      setSuccess('⚡ 驗證碼已自動填入，正在登入...')
-      // 直接自動驗證
-      const data = await authAPI.verifyOtp(phone, autoCode)
-      login(data.token, data.user)
-      setSuccess('✅ 登入成功！')
+      setSuccess('✅ 驗證碼已送出，請稍等管理員以簡訊發送給您')
     } catch (err) {
       setError(err.message)
     } finally {
@@ -89,7 +82,7 @@ export default function LoginPage() {
         {/* Tab */}
         <div style={{ display:'flex', marginBottom:24, background:'#1e1e2e', borderRadius:10, padding:4 }}>
           {[['password','🔑 帳號密碼'],['otp','📱 手機OTP']].map(([key,label]) => (
-            <button key={key} onClick={()=>{ setTab(key); setError(''); setSuccess('') }}
+            <button key={key} onClick={()=>{ setTab(key); setError(''); setSuccess(''); setOtpSent(false); setOtp('') }}
               style={{ flex:1, padding:'10px', border:'none', borderRadius:8, cursor:'pointer',
                 background: tab===key ? 'linear-gradient(135deg,#9c27b0,#673ab7)' : 'transparent',
                 color:'#fff', fontWeight:'bold', fontSize:14 }}>
@@ -105,9 +98,9 @@ export default function LoginPage() {
 
         {tab === 'password' ? (
           <form onSubmit={handlePasswordLogin}>
-            <input style={inputStyle} placeholder="帳號 / admin" value={username}
+            <input style={inputStyle} placeholder="帳號" value={username}
               onChange={e=>setUsername(e.target.value)} required />
-            <input style={inputStyle} type="password" placeholder="密碼 / admin888" value={password}
+            <input style={inputStyle} type="password" placeholder="密碼" value={password}
               onChange={e=>setPassword(e.target.value)} required />
             <button type="submit" style={btnStyle} disabled={loading}>
               {loading ? '登入中...' : '🔑 登入'}
@@ -116,28 +109,33 @@ export default function LoginPage() {
         ) : (
           <form onSubmit={handleOtpLogin}>
             <div style={{ display:'flex', gap:8, marginBottom:12 }}>
-              <input style={{ ...inputStyle, marginBottom:0, flex:1 }} placeholder="手機號碼 (e.g. 0912345678)"
+              <input style={{ ...inputStyle, marginBottom:0, flex:1 }} placeholder="手機號碼 (09xxxxxxxx)"
                 value={phone} onChange={e=>setPhone(e.target.value)} required />
-              <button type="button" onClick={handleSendOtp} disabled={loading}
-                style={{ padding:'12px 16px', background: loading ? '#555' : '#1565c0', color:'#fff',
-                  border:'none', borderRadius:10, cursor: loading ? 'not-allowed' : 'pointer', whiteSpace:'nowrap', fontSize:13 }}>
-                {loading ? '驗證中...' : '⚡ 一鍵登入'}
+              <button type="button" onClick={handleSendOtp} disabled={loading || otpSent}
+                style={{ padding:'12px 14px', background: otpSent ? '#444' : '#1565c0', color:'#fff',
+                  border:'none', borderRadius:10, cursor: (loading||otpSent) ? 'not-allowed' : 'pointer',
+                  whiteSpace:'nowrap', fontSize:13 }}>
+                {loading ? '送出中...' : otpSent ? '已送出' : '發送驗證碼'}
               </button>
             </div>
             {otpSent && (
-              <input style={inputStyle} placeholder="6位數驗證碼（已自動填入）" value={otp}
-                onChange={e=>setOtp(e.target.value)} maxLength={6} />
-            )}
-            {otpSent && (
-              <button type="submit" style={btnStyle} disabled={loading}>
-                {loading ? '驗證中...' : '📱 確認登入'}
-              </button>
+              <>
+                <div style={{ background:'#1a2a1a', border:'1px solid #2a5a2a', borderRadius:8,
+                  padding:'10px 14px', marginBottom:12, fontSize:13, color:'#aaffaa' }}>
+                  📱 管理員將以簡訊發送驗證碼至 <strong>{phone}</strong>，請稍候輸入
+                </div>
+                <input style={inputStyle} placeholder="輸入6位數驗證碼" value={otp}
+                  onChange={e=>setOtp(e.target.value)} maxLength={6} required autoFocus />
+                <button type="submit" style={btnStyle} disabled={loading || otp.length < 6}>
+                  {loading ? '驗證中...' : '📱 確認登入'}
+                </button>
+              </>
             )}
           </form>
         )}
 
-        <div style={{ textAlign:'center', marginTop:16, color:'#888', fontSize:13 }}>
-          測試帳號：admin / admin888
+        <div style={{ textAlign:'center', marginTop:16, color:'#555', fontSize:12 }}>
+          © 爽爽贏Online
         </div>
       </div>
     </div>

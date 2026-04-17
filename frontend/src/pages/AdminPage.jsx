@@ -237,6 +237,76 @@ function Table({ headers, rows }) {
 // ─── PAGE COMPONENTS ─────────────────────────────────────────────────────────
 // ═══════════════════════════════════════════════════════════════════════════════
 
+function OtpPendingBox() {
+  const [otps, setOtps] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const API = import.meta.env.VITE_API_URL || 'https://casino-production-abbf.up.railway.app';
+
+  const fetchOtps = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API}/admin/otp-list`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      setOtps(data.otps || []);
+    } catch (e) {
+      setOtps([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // auto-refresh every 15s
+  useState(() => {
+    fetchOtps();
+    const t = setInterval(fetchOtps, 15000);
+    return () => clearInterval(t);
+  });
+
+  if (otps.length === 0 && !loading) return null;
+
+  return (
+    <div style={{
+      background: '#fffbe6', border: '2px solid #f59e0b', borderRadius: 10,
+      padding: '16px 20px', marginBottom: 20,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <div style={{ fontWeight: 700, fontSize: 15, color: '#92400e' }}>📨 待發送驗證碼 ({otps.length})</div>
+        <button onClick={fetchOtps} style={{ ...s.btnSm(C.warning), fontSize: 11 }}>🔄 刷新</button>
+      </div>
+      {loading && <div style={{ color: '#888', fontSize: 13 }}>載入中...</div>}
+      {otps.map((o, i) => {
+        const exp = new Date(o.expires + 'Z');
+        const now = new Date();
+        const secLeft = Math.max(0, Math.floor((exp - now) / 1000));
+        const minLeft = Math.floor(secLeft / 60);
+        return (
+          <div key={i} style={{
+            display: 'flex', alignItems: 'center', gap: 16,
+            padding: '10px 0',
+            borderTop: i > 0 ? '1px solid #fde68a' : 'none',
+            flexWrap: 'wrap',
+          }}>
+            <span style={{ fontSize: 14, fontWeight: 600, color: '#1e293b', minWidth: 120 }}>📱 {o.phone}</span>
+            <span style={{
+              fontSize: 22, fontWeight: 900, letterSpacing: 4,
+              color: '#dc2626', background: '#fee2e2', padding: '4px 12px', borderRadius: 8,
+              fontFamily: 'monospace',
+            }}>{o.otp}</span>
+            <span style={{ fontSize: 12, color: '#92400e' }}>⏱ 剩 {minLeft}分{secLeft % 60}秒</span>
+            <button
+              onClick={() => { navigator.clipboard?.writeText(o.otp); }}
+              style={{ ...s.btnSm('#6366f1'), fontSize: 11 }}
+            >複製</button>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function DashboardPage() {
   const revenueData = [
     { label: 'Mo', value: 42000 }, { label: 'Tu', value: 38000 }, { label: 'We', value: 55000 },
@@ -255,6 +325,7 @@ function DashboardPage() {
   ];
   return (
     <div>
+      <OtpPendingBox />
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 14, marginBottom: 20 }}>
         <KPICard icon="💰" title="今日營收" value="NT$124,800" sub="+18.4% vs 昨日" color={C.success} trend="+" />
         <KPICard icon="👥" title="活躍用戶" value="1,284" sub="+52 今日新增" color={C.primary} trend="+" />

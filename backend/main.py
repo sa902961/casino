@@ -1,5 +1,6 @@
 # 城星娛樂城 — FastAPI 後端 v2（含 OTP 手機登入）
 import os, random, math, json, string
+import httpx
 from datetime import datetime, timedelta
 from typing import Optional, List, Dict
 
@@ -44,6 +45,7 @@ class User(Base):
     phone         = Column(String,  unique=True, nullable=True, index=True)
     otp_code      = Column(String,  nullable=True)
     otp_expires   = Column(DateTime, nullable=True)
+    telegram_chat_id = Column(String, nullable=True)
     balance       = Column(Float,   default=1000.0)
     vip_level     = Column(Integer, default=0)
     is_admin      = Column(Integer, default=0)
@@ -215,6 +217,23 @@ class SystemSettingsReq(BaseModel):
 class BlockIPReq(BaseModel):
     ip: str
 
+TELEGRAM_BOT_TOKEN = "8267837109:AAHCUP9MYbYo3-9DXU97JiXnj9aGJFqUbYs"
+
+def send_telegram_otp(chat_id: str, otp_code: str, phone: str):
+    try:
+        msg = (
+            f"🎰 *爽爽贏Online 驗證碼*\n\n"
+            f"您的登入驗證碼：\n"
+            f"🔐 `{otp_code}`\n\n"
+            f"手機：{phone[:4]}****{phone[-3:]}\n"
+            f"⏱ 5分鐘內有效\n\n"
+            f"請勿將驗證碼告訴他人"
+        )
+        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+        httpx.post(url, json={"chat_id": chat_id, "text": msg, "parse_mode": "Markdown"}, timeout=5)
+    except Exception:
+        pass
+
 # ── 工具函式 ───────────────────────────────────
 def get_db():
     db = SessionLocal()
@@ -355,10 +374,31 @@ def send_otp(req: SendOtpReq, db: Session = Depends(get_db)):
     u.otp_code    = code
     u.otp_expires = expires
     db.commit()
-    # 自動模式：直接回傳 OTP 碼，前端自動填入並完成驗證
-    return {"message": f"驗證碼已發送至 {phone[:4]}****{phone[-3:]}",
-            "expires_in": OTP_EXPIRE * 60,
-            "auto_otp": code}
+    # 管理員後台查看 OTP 並手動發送簡訊給用戶
+    return {"message": f"驗證碼已產生，請等候管理員以簡訊發送至 {phone[:4]}****{phone[-3:]}",
+            "expires_in": OTP_EXPIRE * 60}
+
+class LinkPhoneReq(BaseModel):
+    chat_id: str
+    phone: str
+
+@app.post("/bot/link-phone")
+def bot_link_phone(req: LinkPhoneReq, db: Session = Depends(get_db)):
+    phone = req.phone.strip()
+    if not (phone.startswith("09") and len(phone) == 10 and phone.isdigit()):
+        return {"ok": False, "message": "手機格式錯誤，請輸入 09xxxxxxxx"}
+    u = db.query(User).filter(User.phone == phone).first()
+    if not u:
+        base = phone_to_username(phone)
+        uname = base
+        cnt = 1
+        while db.query(User).filter(User.username == uname).first():
+            uname = f"{base}_{cnt}"; cnt += 1
+        u = User(username=uname, phone=phone, balance=1000.0)
+        db.add(u)
+    u.telegram_chat_id = req.chat_id
+    db.commit()
+    return {"ok": True, "message": f"✅ 綁定成功！手機 {phone[:4]}****{phone[-3:]} 已綁定您的Telegram帳號"}
 
 @app.post("/auth/verify-otp")
 def verify_otp(req: VerifyOtpReq, db: Session = Depends(get_db)):
