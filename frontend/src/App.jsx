@@ -25,6 +25,7 @@ import CrashGame       from './games/CrashGame'
 import BaccaratGame    from './games/BaccaratGame'
 import RouletteGame    from './games/RouletteGame'
 import BlackjackGame   from './games/BlackjackGame'
+import SettGame        from './games/SettGame'
 import PokerGame       from './games/PokerGame'
 import FishingGame     from './games/FishingGame'
 import Fishing2Game    from './games/Fishing2Game'
@@ -89,6 +90,7 @@ function AppInner() {
         <Route path="/game/baccarat"     element={<BaccaratGame />} />
         <Route path="/game/roulette"     element={<RouletteGame />} />
         <Route path="/game/blackjack"    element={<BlackjackGame />} />
+        <Route path="/game/sett"          element={<SettGame />} />
         <Route path="/game/poker"        element={<PokerGame />} />
         <Route path="/game/fishing"      element={<FishingGame />} />
         <Route path="/game/fishing2"     element={<Fishing2Game />} />
