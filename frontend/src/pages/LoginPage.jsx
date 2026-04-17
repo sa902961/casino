@@ -76,7 +76,7 @@ export default function LoginPage() {
       <div style={{ width:'100%', maxWidth:420, background:'#12122a', borderRadius:20,
         border:'1px solid #333', padding:32, boxShadow:'0 20px 60px #0008' }}>
         <h2 style={{ color:'#ffd700', textAlign:'center', marginBottom:24, fontSize:24 }}>
-          🌟 登入城星娛樂城
+          🌟 登入爽爽贏Online
         </h2>
 
         {/* Tab */}

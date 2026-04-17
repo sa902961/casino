@@ -24,10 +24,10 @@ export default function HomePage({ onLogin, onRegister }) {
             <span className="hero-star">★</span>
           </div>
           <h1 className="hero-title">
-            <span className="hero-title-main">城星</span>
-            <span className="hero-title-sub">娛樂城</span>
+            <span className="hero-title-main">爽爽贏</span>
+            <span className="hero-title-sub">Online</span>
           </h1>
-          <p className="hero-desc">全球華人線上遊戲娛樂首選 · 40款精彩遊戲</p>
+          <p className="hero-desc">全球華人線上娛樂首選 · 40款精彩遊戲 · 爽就對了！</p>
           <div className="hero-badges">
             <span className="badge badge-gold">🎰 老虎機</span>
             <span className="badge badge-cyan">🃏 桌遊</span>
@@ -43,6 +43,9 @@ export default function HomePage({ onLogin, onRegister }) {
             </button>
             <Link to="/lobby" className="btn btn-cyan btn-lg">
               🎮 免費試玩
+            </Link>
+            <Link to="/game-intro" className="btn btn-outline btn-lg">
+              📖 遊戲介紹
             </Link>
           </div>
           <div className="hero-stats">
@@ -92,7 +95,7 @@ export default function HomePage({ onLogin, onRegister }) {
       {/* 特色 */}
       <section className="home-section home-features">
         <div className="home-section-inner">
-          <h2 className="section-title">✨ 為什麼選擇城星</h2>
+          <h2 className="section-title">✨ 為什麼選擇爽爽贏Online</h2>
           <div className="features-grid">
             {[
               {icon:'🔒',title:'安全可靠',desc:'採用 SSL 加密，資金安全有保障'},
@@ -114,9 +117,15 @@ export default function HomePage({ onLogin, onRegister }) {
 
       {/* 底部 */}
       <footer className="home-footer">
-        <div className="footer-logo">★ 城星娛樂城</div>
+        <div className="footer-logo">🎰 爽爽贏Online</div>
+        <div style={{display:'flex',gap:16,justifyContent:'center',flexWrap:'wrap',marginBottom:8}}>
+          <Link to="/game-intro" style={{color:'var(--gray-light)',fontSize:13}}>遊戲介紹</Link>
+          <Link to="/promotions" style={{color:'var(--gray-light)',fontSize:13}}>優惠活動</Link>
+          <Link to="/support" style={{color:'var(--gray-light)',fontSize:13}}>客服中心</Link>
+          <Link to="/lobby" style={{color:'var(--gray-light)',fontSize:13}}>遊戲大廳</Link>
+        </div>
         <p>本平台遊戲僅供娛樂目的，遊戲幣不具任何現金價值。</p>
-        <p>© 2024 城星娛樂城 All Rights Reserved</p>
+        <p>© 2025 爽爽贏Online All Rights Reserved</p>
       </footer>
     </div>
   )

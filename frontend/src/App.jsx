@@ -17,6 +17,8 @@ import LeaderboardPage from './pages/LeaderboardPage'
 import TransactionsPage from './pages/TransactionsPage'
 import PromotionsPage  from './pages/PromotionsPage'
 import AdminPage       from './pages/AdminPage'
+import GameIntroPage   from './pages/GameIntroPage'
+import SupportPage     from './pages/SupportPage'
 
 // 遊戲頁面
 import SlotGame        from './games/SlotGame'
@@ -82,6 +84,8 @@ function AppInner() {
         <Route path="/leaderboard" element={<LeaderboardPage />} />
         <Route path="/promotions"  element={<PromotionsPage />} />
         <Route path="/admin"       element={user?.is_admin ? <AdminPage /> : <Navigate to="/" />} />
+        <Route path="/game-intro"   element={<GameIntroPage />} />
+        <Route path="/support"      element={<SupportPage />} />
 
         {/* 遊戲路由 */}
         <Route path="/game/slot/:theme"  element={<SlotGame />} />
@@ -121,7 +125,7 @@ function AppInner() {
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
 
-      {user && <BottomNav />}
+      <BottomNav />
 
       {authMode && (
         <AuthModal

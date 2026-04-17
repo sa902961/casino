@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 120" width="400" height="120">
+  <defs>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFD700;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#FFA500;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FF6B00;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="redGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#8B0000;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#4a0000;stop-opacity:1" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="shadow">
+      <feDropShadow dx="2" dy="2" stdDeviation="3" flood-color="#000" flood-opacity="0.8"/>
+    </filter>
+  </defs>
+  <!-- 背景 -->
+  <rect width="400" height="120" fill="url(#redGrad)" rx="12"/>
+  <!-- 金色邊框 -->
+  <rect x="3" y="3" width="394" height="114" fill="none" stroke="url(#goldGrad)" stroke-width="2" rx="10"/>
+  <!-- 裝飾星星 -->
+  <text x="18" y="40" font-size="20" fill="#FFD700" filter="url(#glow)">★</text>
+  <text x="362" y="40" font-size="20" fill="#FFD700" filter="url(#glow)">★</text>
+  <text x="12" y="90" font-size="14" fill="#FF6B00" opacity="0.7">✦</text>
+  <text x="372" y="90" font-size="14" fill="#FF6B00" opacity="0.7">✦</text>
+  <!-- 主標題 -->
+  <text x="200" y="62" font-family="'Microsoft JhengHei','微軟正黑體',serif" font-size="46" font-weight="bold"
+    fill="url(#goldGrad)" text-anchor="middle" filter="url(#glow)" letter-spacing="4">爽爽贏</text>
+  <!-- Online 文字 -->
+  <text x="310" y="52" font-family="Arial Black,sans-serif" font-size="22" font-weight="bold"
+    fill="#FFF" text-anchor="middle" filter="url(#shadow)">Online</text>
+  <!-- 副標語 -->
+  <text x="200" y="95" font-family="'Microsoft JhengHei','微軟正黑體',sans-serif" font-size="16"
+    fill="#FFD700" text-anchor="middle" opacity="0.9" letter-spacing="8">娛 樂 平 台</text>
+  <!-- 底部裝飾線 -->
+  <line x1="40" y1="105" x2="160" y2="105" stroke="#FFD700" stroke-width="1" opacity="0.5"/>
+  <line x1="240" y1="105" x2="360" y2="105" stroke="#FFD700" stroke-width="1" opacity="0.5"/>
+  <circle cx="200" cy="105" r="3" fill="#FFD700"/>
+</svg>

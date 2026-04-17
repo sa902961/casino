@@ -75,7 +75,7 @@ export default function AuthModal({ mode, onClose, onSwitch }) {
         <div className="auth-logo">
           <span className="auth-logo-star">★</span>
           <div>
-            <div className="auth-logo-title">城星娛樂城</div>
+            <div className="auth-logo-title">爽爽贏Online</div>
             <div className="auth-logo-sub">{isLogin?'歡迎回來！':'加入我們，立享好禮'}</div>
           </div>
         </div>

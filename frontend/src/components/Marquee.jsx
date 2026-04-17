@@ -3,7 +3,7 @@ import { userAPI } from '../utils/api'
 
 export default function Marquee() {
   const [items, setItems] = useState([
-    '🎉 城星娛樂城盛大開業！新會員註冊送1000遊戲幣',
+    '🎉 爽爽贏Online盛大開業！新會員註冊送1000遊戲幣',
     '🏆 本週大獎得主：lucky888 贏得 99,999 幣！',
     '🎰 老虎機全新登場，最高100倍彩金！',
     '💰 VIP會員專屬優惠，儲值即享雙倍紅利！',
