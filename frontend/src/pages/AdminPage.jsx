@@ -2,54 +2,71 @@ import { useState } from 'react';
 
 // ─── Color Palette ───────────────────────────────────────────────────────────
 const C = {
-  sidebar:   '#0f1117',
-  bg:        '#1a1d2e',
-  card:      '#242736',
-  cardHover: '#2d3048',
-  border:    '#2e3250',
-  primary:   '#6366f1',
-  primaryHover: '#4f52d4',
-  success:   '#10b981',
-  warning:   '#f59e0b',
-  danger:    '#ef4444',
-  text:      '#e2e8f0',
-  textMuted: '#8892a4',
-  textDim:   '#4a5568',
-  white:     '#ffffff',
+  sidebar:      '#1e2a3a',
+  sidebarHover: '#263347',
+  bg:           '#f5f6fa',
+  white:        '#ffffff',
+  card:         '#ffffff',
+  border:       '#e5e7eb',
+  primary:      '#2563eb',
+  success:      '#16a34a',
+  warning:      '#d97706',
+  danger:       '#dc2626',
+  text:         '#111827',
+  textMuted:    '#6b7280',
+  textLight:    '#9ca3af',
+  headerBg:     '#ffffff',
+  tableTh:      '#f9fafb',
 };
 
 // ─── Shared Style Helpers ────────────────────────────────────────────────────
 const s = {
   card: {
-    background: C.card, borderRadius: 12, padding: '20px 24px',
+    background: C.card,
+    borderRadius: 6,
+    padding: '20px 24px',
     border: `1px solid ${C.border}`,
+    boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
   },
   badge: (color) => ({
-    display: 'inline-block', padding: '2px 10px', borderRadius: 20,
-    fontSize: 11, fontWeight: 600, background: color + '22', color,
+    display: 'inline-block', padding: '2px 8px', borderRadius: 4,
+    fontSize: 11, fontWeight: 500, background: color + '18', color,
+    border: `1px solid ${color}33`,
   }),
   btn: (color = C.primary, outline = false) => ({
-    padding: '7px 16px', borderRadius: 8, border: outline ? `1px solid ${color}` : 'none',
-    background: outline ? 'transparent' : color, color: outline ? color : C.white,
-    cursor: 'pointer', fontSize: 13, fontWeight: 600,
-    transition: 'opacity .15s',
+    padding: '7px 16px', borderRadius: 5,
+    border: outline ? `1px solid ${color}` : 'none',
+    background: outline ? 'transparent' : color,
+    color: outline ? color : C.white,
+    cursor: 'pointer', fontSize: 13, fontWeight: 500,
   }),
   btnSm: (color = C.primary) => ({
-    padding: '4px 12px', borderRadius: 6, border: 'none',
-    background: color, color: C.white, cursor: 'pointer', fontSize: 12, fontWeight: 600,
+    padding: '4px 10px', borderRadius: 4, border: 'none',
+    background: color, color: C.white, cursor: 'pointer', fontSize: 12, fontWeight: 500,
   }),
   input: {
-    background: '#1e2235', border: `1px solid ${C.border}`, borderRadius: 8,
-    color: C.text, padding: '8px 12px', fontSize: 13, outline: 'none',
+    background: C.white,
+    border: `1px solid ${C.border}`,
+    borderRadius: 5,
+    color: C.text,
+    padding: '7px 10px',
+    fontSize: 13,
+    outline: 'none',
   },
   th: {
-    padding: '10px 16px', color: C.textMuted, fontSize: 12, fontWeight: 600,
-    textAlign: 'left', borderBottom: `1px solid ${C.border}`, textTransform: 'uppercase',
-    letterSpacing: '0.05em',
+    padding: '10px 14px',
+    color: C.textMuted,
+    fontSize: 12,
+    fontWeight: 600,
+    textAlign: 'left',
+    background: C.tableTh,
+    borderBottom: `1px solid ${C.border}`,
   },
   td: {
-    padding: '12px 16px', color: C.text, fontSize: 13,
-    borderBottom: `1px solid ${C.border}22`,
+    padding: '11px 14px',
+    color: C.text,
+    fontSize: 13,
+    borderBottom: `1px solid ${C.border}`,
   },
 };
 
@@ -102,7 +119,7 @@ function BarChart({ data, color = C.primary, label }) {
           return (
             <g key={i}>
               <rect x={i * 36 + 4} y={80 - h - 8} width={28} height={h}
-                fill={color} opacity={0.8} rx={4} />
+                fill={color} opacity={0.75} rx={3} />
               <text x={i * 36 + 18} y={78} textAnchor="middle"
                 fill={C.textMuted} fontSize={9}>{d.label}</text>
             </g>
@@ -123,12 +140,6 @@ function LineChart({ data, color = C.primary }) {
   }).join(' ');
   return (
     <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
-      <defs>
-        <linearGradient id="lg" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.3" />
-          <stop offset="100%" stopColor={color} stopOpacity="0" />
-        </linearGradient>
-      </defs>
       <polyline points={pts} fill="none" stroke={color} strokeWidth={2} strokeLinejoin="round" />
       {data.map((d, i) => {
         const x = pad + (i / (data.length - 1)) * (W - pad * 2);
@@ -142,15 +153,15 @@ function LineChart({ data, color = C.primary }) {
 // ─── KPI Card ─────────────────────────────────────────────────────────────────
 function KPICard({ icon, title, value, sub, color, trend }) {
   return (
-    <div style={{ ...s.card, display: 'flex', alignItems: 'flex-start', gap: 16 }}>
-      <div style={{
-        width: 48, height: 48, borderRadius: 12,
-        background: color + '22', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 22, flexShrink: 0,
-      }}>{icon}</div>
+    <div style={{
+      ...s.card,
+      borderLeft: `4px solid ${color}`,
+      display: 'flex', alignItems: 'flex-start', gap: 14,
+    }}>
+      <div style={{ fontSize: 22, flexShrink: 0, marginTop: 2 }}>{icon}</div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ color: C.textMuted, fontSize: 12, fontWeight: 500, marginBottom: 4 }}>{title}</div>
-        <div style={{ color: C.white, fontSize: 24, fontWeight: 700, lineHeight: 1 }}>{value}</div>
+        <div style={{ color: C.textMuted, fontSize: 12, marginBottom: 4 }}>{title}</div>
+        <div style={{ color: C.text, fontSize: 22, fontWeight: 700, lineHeight: 1 }}>{value}</div>
         {sub && (
           <div style={{ color: trend === '+' ? C.success : trend === '-' ? C.danger : C.textMuted, fontSize: 11, marginTop: 4 }}>
             {trend === '+' ? '▲' : trend === '-' ? '▼' : ''} {sub}
@@ -165,16 +176,17 @@ function KPICard({ icon, title, value, sub, color, trend }) {
 function Toggle({ value, onChange }) {
   return (
     <div onClick={() => onChange(!value)} style={{
-      width: 44, height: 24, borderRadius: 12,
-      background: value ? C.primary : C.border,
-      cursor: 'pointer', position: 'relative', transition: 'background .2s',
+      width: 40, height: 22, borderRadius: 11,
+      background: value ? C.primary : '#d1d5db',
+      cursor: 'pointer', position: 'relative',
     }}>
       <div style={{
         position: 'absolute', top: 3,
-        left: value ? 23 : 3,
-        width: 18, height: 18, borderRadius: '50%',
-        background: C.white, transition: 'left .2s',
-        boxShadow: '0 1px 4px #0006',
+        left: value ? 21 : 3,
+        width: 16, height: 16, borderRadius: '50%',
+        background: C.white,
+        transition: 'left .15s',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
       }} />
     </div>
   );
@@ -190,7 +202,7 @@ function Slider({ value, onChange, min = 0, max = 100, label }) {
         onChange={e => onChange(Number(e.target.value))}
         style={{ flex: 1, accentColor: C.primary }}
       />
-      <span style={{ color: C.primary, fontWeight: 700, width: 40, textAlign: 'right', fontSize: 13 }}>
+      <span style={{ color: C.primary, fontWeight: 600, width: 40, textAlign: 'right', fontSize: 13 }}>
         {value}%
       </span>
     </div>
@@ -200,8 +212,8 @@ function Slider({ value, onChange, min = 0, max = 100, label }) {
 // ─── Section Title ────────────────────────────────────────────────────────────
 function SectionTitle({ children, action }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-      <h2 style={{ color: C.white, fontSize: 18, fontWeight: 700, margin: 0 }}>{children}</h2>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+      <h2 style={{ color: C.text, fontSize: 16, fontWeight: 600, margin: 0 }}>{children}</h2>
       {action}
     </div>
   );
@@ -243,35 +255,37 @@ function DashboardPage() {
   ];
   return (
     <div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 16, marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 14, marginBottom: 20 }}>
         <KPICard icon="💰" title="今日營收" value="NT$124,800" sub="+18.4% vs 昨日" color={C.success} trend="+" />
         <KPICard icon="👥" title="活躍用戶" value="1,284" sub="+52 今日新增" color={C.primary} trend="+" />
         <KPICard icon="🎰" title="遊戲局數" value="8,471" sub="-3.2% vs 昨日" color={C.warning} trend="-" />
         <KPICard icon="💳" title="待處理交易" value="5" sub="需要立即處理" color={C.danger} trend="" />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 20 }}>
         <div style={s.card}>
-          <div style={{ color: C.text, fontWeight: 600, marginBottom: 12, fontSize: 14 }}>📊 本週營收趨勢</div>
+          <div style={{ color: C.text, fontWeight: 600, marginBottom: 12, fontSize: 13 }}>本週營收趨勢</div>
           <BarChart data={revenueData} color={C.primary} />
-          <div style={{ marginTop: 8, color: C.textMuted, fontSize: 11 }}>單位：新台幣</div>
+          <div style={{ marginTop: 6, color: C.textMuted, fontSize: 11 }}>單位：新台幣</div>
         </div>
         <div style={s.card}>
-          <div style={{ color: C.text, fontWeight: 600, marginBottom: 12, fontSize: 14 }}>📈 本月用戶成長</div>
+          <div style={{ color: C.text, fontWeight: 600, marginBottom: 12, fontSize: 13 }}>本月用戶成長</div>
           <LineChart data={userGrowth} color={C.success} />
-          <div style={{ marginTop: 8, color: C.textMuted, fontSize: 11 }}>單位：人數</div>
+          <div style={{ marginTop: 6, color: C.textMuted, fontSize: 11 }}>單位：人數</div>
         </div>
       </div>
 
       <div style={s.card}>
-        <SectionTitle>⚠️ 待處理項目</SectionTitle>
+        <SectionTitle>待處理項目</SectionTitle>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
           {pending.map((p, i) => (
             <div key={i} style={{
-              background: p.color + '15', border: `1px solid ${p.color}44`,
-              borderRadius: 10, padding: '14px 20px', display: 'flex', alignItems: 'center', gap: 12,
+              border: `1px solid ${C.border}`,
+              borderRadius: 5, padding: '12px 18px',
+              display: 'flex', alignItems: 'center', gap: 12,
+              background: C.white,
             }}>
-              <div style={{ fontSize: 28, fontWeight: 700, color: p.color }}>{p.count}</div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: p.color }}>{p.count}</div>
               <div style={{ color: C.text, fontSize: 13 }}>{p.type}</div>
               <button style={s.btnSm(p.color)}>前往處理</button>
             </div>
@@ -315,25 +329,23 @@ function UsersPage() {
       <SectionTitle action={
         <div style={{ display: 'flex', gap: 8 }}>
           <input
-            placeholder="🔍 搜尋用戶名稱 / Email"
+            placeholder="搜尋用戶名稱 / Email"
             value={search} onChange={e => setSearch(e.target.value)}
             style={{ ...s.input, width: 220 }}
           />
           <button style={s.btn()}>匯出 CSV</button>
         </div>
-      }>👥 用戶管理</SectionTitle>
+      }>用戶管理</SectionTitle>
 
       <div style={s.card}>
         <Table
           headers={['#', '姓名', 'Email', '點數', '狀態', '加入日期', '上次登入', '操作']}
           rows={filtered.map(u => (
-            <tr key={u.id} style={{ transition: 'background .1s' }}
-              onMouseEnter={e => e.currentTarget.style.background = C.cardHover + '44'}
-              onMouseLeave={e => e.currentTarget.style.background = ''}>
+            <tr key={u.id}>
               <td style={s.td}>{u.id}</td>
               <td style={s.td}><span style={{ fontWeight: 600 }}>{u.name}</span></td>
               <td style={{ ...s.td, color: C.textMuted }}>{u.email}</td>
-              <td style={{ ...s.td, color: C.primary, fontWeight: 700 }}>{u.points.toLocaleString()}</td>
+              <td style={{ ...s.td, color: C.primary, fontWeight: 600 }}>{u.points.toLocaleString()}</td>
               <td style={s.td}>
                 <span style={s.badge(u.status === '正常' ? C.success : C.danger)}>{u.status}</span>
               </td>
@@ -350,7 +362,7 @@ function UsersPage() {
                         style={{ ...s.input, width: 80, padding: '4px 8px' }}
                       />
                       <button onClick={() => applyPoints(u.id)} style={s.btnSm(C.success)}>確認</button>
-                      <button onClick={() => setEditUser(null)} style={s.btnSm(C.textDim)}>取消</button>
+                      <button onClick={() => setEditUser(null)} style={s.btnSm('#9ca3af')}>取消</button>
                     </>
                   ) : (
                     <>
@@ -383,14 +395,14 @@ function DepositPage() {
   };
   return (
     <div>
-      <SectionTitle>💰 儲值審核</SectionTitle>
+      <SectionTitle>儲值審核</SectionTitle>
       <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
         {['待審核', '已核准', '已拒絕'].map(st => {
           const c = st === '待審核' ? C.warning : st === '已核准' ? C.success : C.danger;
           const cnt = items.filter(i => i.status === st).length;
           return (
-            <div key={st} style={{ ...s.card, flex: 1, textAlign: 'center', padding: '14px' }}>
-              <div style={{ fontSize: 22, fontWeight: 700, color: c }}>{cnt}</div>
+            <div key={st} style={{ ...s.card, flex: 1, textAlign: 'center', padding: '14px', borderTop: `3px solid ${c}` }}>
+              <div style={{ fontSize: 20, fontWeight: 700, color: c }}>{cnt}</div>
               <div style={{ color: C.textMuted, fontSize: 12, marginTop: 4 }}>{st}</div>
             </div>
           );
@@ -403,7 +415,7 @@ function DepositPage() {
             <tr key={item.id}>
               <td style={{ ...s.td, fontFamily: 'monospace', color: C.primary }}>{item.id}</td>
               <td style={s.td}>{item.user}</td>
-              <td style={{ ...s.td, fontWeight: 700, color: C.success }}>NT${item.amount.toLocaleString()}</td>
+              <td style={{ ...s.td, fontWeight: 600, color: C.success }}>NT${item.amount.toLocaleString()}</td>
               <td style={s.td}>{item.method}</td>
               <td style={{ ...s.td, color: C.textMuted }}>{item.time}</td>
               <td style={s.td}>
@@ -415,10 +427,10 @@ function DepositPage() {
               <td style={s.td}>
                 {item.status === '待審核' ? (
                   <div style={{ display: 'flex', gap: 6 }}>
-                    <button onClick={() => handle(item.id, 'approve')} style={s.btnSm(C.success)}>✓ 核准</button>
-                    <button onClick={() => handle(item.id, 'reject')} style={s.btnSm(C.danger)}>✕ 拒絕</button>
+                    <button onClick={() => handle(item.id, 'approve')} style={s.btnSm(C.success)}>核准</button>
+                    <button onClick={() => handle(item.id, 'reject')} style={s.btnSm(C.danger)}>拒絕</button>
                   </div>
-                ) : <span style={{ color: C.textDim }}>—</span>}
+                ) : <span style={{ color: C.textLight }}>—</span>}
               </td>
             </tr>
           ))}
@@ -440,14 +452,14 @@ function WithdrawPage() {
   };
   return (
     <div>
-      <SectionTitle>💸 提款審核</SectionTitle>
+      <SectionTitle>提款審核</SectionTitle>
       <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
         {['待審核', '已核准', '已拒絕'].map(st => {
           const c = st === '待審核' ? C.warning : st === '已核准' ? C.success : C.danger;
           const cnt = items.filter(i => i.status === st).length;
           return (
-            <div key={st} style={{ ...s.card, flex: 1, textAlign: 'center', padding: '14px' }}>
-              <div style={{ fontSize: 22, fontWeight: 700, color: c }}>{cnt}</div>
+            <div key={st} style={{ ...s.card, flex: 1, textAlign: 'center', padding: '14px', borderTop: `3px solid ${c}` }}>
+              <div style={{ fontSize: 20, fontWeight: 700, color: c }}>{cnt}</div>
               <div style={{ color: C.textMuted, fontSize: 12, marginTop: 4 }}>{st}</div>
             </div>
           );
@@ -460,7 +472,7 @@ function WithdrawPage() {
             <tr key={item.id}>
               <td style={{ ...s.td, fontFamily: 'monospace', color: C.primary }}>{item.id}</td>
               <td style={s.td}>{item.user}</td>
-              <td style={{ ...s.td, fontWeight: 700, color: C.danger }}>NT${item.amount.toLocaleString()}</td>
+              <td style={{ ...s.td, fontWeight: 600, color: C.danger }}>NT${item.amount.toLocaleString()}</td>
               <td style={s.td}>{item.bank}</td>
               <td style={{ ...s.td, fontFamily: 'monospace', color: C.textMuted }}>{item.account}</td>
               <td style={{ ...s.td, color: C.textMuted }}>{item.time}</td>
@@ -473,10 +485,10 @@ function WithdrawPage() {
               <td style={s.td}>
                 {item.status === '待審核' ? (
                   <div style={{ display: 'flex', gap: 6 }}>
-                    <button onClick={() => handle(item.id, 'approve')} style={s.btnSm(C.success)}>✓ 核准</button>
-                    <button onClick={() => handle(item.id, 'reject')} style={s.btnSm(C.danger)}>✕ 拒絕</button>
+                    <button onClick={() => handle(item.id, 'approve')} style={s.btnSm(C.success)}>核准</button>
+                    <button onClick={() => handle(item.id, 'reject')} style={s.btnSm(C.danger)}>拒絕</button>
                   </div>
-                ) : <span style={{ color: C.textDim }}>—</span>}
+                ) : <span style={{ color: C.textLight }}>—</span>}
               </td>
             </tr>
           ))}
@@ -490,12 +502,12 @@ function WithdrawPage() {
 
 function GamesPage() {
   const initGames = [
-    { id: 'slots1', name: '🎰 財神臨門', rtp: 96, enabled: true, minBet: 10, maxBet: 5000 },
-    { id: 'slots2', name: '🐉 龍鳳呈祥', rtp: 94, enabled: true, minBet: 5, maxBet: 3000 },
-    { id: 'slots3', name: '🍀 幸運三葉草', rtp: 97, enabled: false, minBet: 1, maxBet: 1000 },
-    { id: 'fish1',  name: '🐟 大海撈金', rtp: 92, enabled: true, minBet: 20, maxBet: 10000 },
-    { id: 'card1',  name: '🃏 百家樂', rtp: 98, enabled: true, minBet: 100, maxBet: 50000 },
-    { id: 'card2',  name: '🎴 龍虎鬥', rtp: 96, enabled: true, minBet: 50, maxBet: 20000 },
+    { id: 'slots1', name: '財神臨門', rtp: 96, enabled: true, minBet: 10, maxBet: 5000 },
+    { id: 'slots2', name: '龍鳳呈祥', rtp: 94, enabled: true, minBet: 5, maxBet: 3000 },
+    { id: 'slots3', name: '幸運三葉草', rtp: 97, enabled: false, minBet: 1, maxBet: 1000 },
+    { id: 'fish1',  name: '大海撈金', rtp: 92, enabled: true, minBet: 20, maxBet: 10000 },
+    { id: 'card1',  name: '百家樂', rtp: 98, enabled: true, minBet: 100, maxBet: 50000 },
+    { id: 'card2',  name: '龍虎鬥', rtp: 96, enabled: true, minBet: 50, maxBet: 20000 },
   ];
   const [games, setGames] = useState(initGames);
 
@@ -504,14 +516,14 @@ function GamesPage() {
 
   return (
     <div>
-      <SectionTitle>🎰 遊戲設定</SectionTitle>
-      <div style={{ display: 'grid', gap: 12 }}>
+      <SectionTitle>遊戲設定</SectionTitle>
+      <div style={{ display: 'grid', gap: 10 }}>
         {games.map(g => (
           <div key={g.id} style={{
             ...s.card, display: 'flex', alignItems: 'center', gap: 20,
             opacity: g.enabled ? 1 : 0.6,
           }}>
-            <div style={{ width: 180, color: C.white, fontWeight: 600, fontSize: 14 }}>{g.name}</div>
+            <div style={{ width: 160, color: C.text, fontWeight: 500, fontSize: 14 }}>{g.name}</div>
             <div style={{ flex: 1 }}>
               <Slider value={g.rtp} onChange={v => update(g.id, 'rtp', v)}
                 min={85} max={99} label="RTP 回報率" />
@@ -525,14 +537,16 @@ function GamesPage() {
                 style={{ ...s.input, width: 80, padding: '5px 8px' }} />
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-              <span style={{ color: C.textMuted, fontSize: 12 }}>{g.enabled ? '上線中' : '已下架'}</span>
+              <span style={{ color: g.enabled ? C.success : C.textMuted, fontSize: 12 }}>
+                {g.enabled ? '上線中' : '已下架'}
+              </span>
               <Toggle value={g.enabled} onChange={v => update(g.id, 'enabled', v)} />
             </div>
           </div>
         ))}
       </div>
-      <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end' }}>
-        <button style={s.btn()}>💾 儲存設定</button>
+      <div style={{ marginTop: 14, display: 'flex', justifyContent: 'flex-end' }}>
+        <button style={s.btn()}>儲存設定</button>
       </div>
     </div>
   );
@@ -574,14 +588,14 @@ function AnnouncementsPage() {
       <SectionTitle action={
         <button onClick={() => { setShowForm(!showForm); setEditing(null); setForm({ title: '', content: '', priority: '中' }); }}
           style={s.btn()}>
-          {showForm ? '✕ 取消' : '＋ 新增公告'}
+          {showForm ? '取消' : '新增公告'}
         </button>
-      }>📢 公告管理</SectionTitle>
+      }>公告管理</SectionTitle>
 
       {showForm && (
-        <div style={{ ...s.card, marginBottom: 16 }}>
-          <div style={{ color: C.text, fontWeight: 600, marginBottom: 12 }}>
-            {editing ? '✏️ 編輯公告' : '📝 新增公告'}
+        <div style={{ ...s.card, marginBottom: 14 }}>
+          <div style={{ color: C.text, fontWeight: 600, marginBottom: 12, fontSize: 14 }}>
+            {editing ? '編輯公告' : '新增公告'}
           </div>
           <div style={{ display: 'grid', gap: 12 }}>
             <div>
@@ -612,21 +626,21 @@ function AnnouncementsPage() {
         </div>
       )}
 
-      <div style={{ display: 'grid', gap: 12 }}>
+      <div style={{ display: 'grid', gap: 10 }}>
         {items.map(item => (
           <div key={item.id} style={{
             ...s.card, display: 'flex', alignItems: 'flex-start', gap: 16,
           }}>
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                <span style={{ color: C.white, fontWeight: 600, fontSize: 14 }}>{item.title}</span>
+                <span style={{ color: C.text, fontWeight: 600, fontSize: 14 }}>{item.title}</span>
                 <span style={s.badge(priorityColor(item.priority))}>{item.priority}優先</span>
                 <span style={s.badge(item.status === '發布' ? C.success : C.textMuted)}>{item.status}</span>
               </div>
               <div style={{ color: C.textMuted, fontSize: 13 }}>{item.content}</div>
             </div>
             <div style={{ flexShrink: 0, textAlign: 'right' }}>
-              <div style={{ color: C.textDim, fontSize: 11, marginBottom: 8 }}>{item.date}</div>
+              <div style={{ color: C.textLight, fontSize: 11, marginBottom: 8 }}>{item.date}</div>
               <div style={{ display: 'flex', gap: 6 }}>
                 <button onClick={() => startEdit(item)} style={s.btnSm(C.primary)}>編輯</button>
                 <button onClick={() => del(item.id)} style={s.btnSm(C.danger)}>刪除</button>
@@ -643,41 +657,41 @@ function AnnouncementsPage() {
 
 function ActivitiesPage() {
   const initActs = [
-    { id: 1, name: '🎁 新用戶歡迎禮', desc: '首次存款送100%紅利，上限NT$3,000', enabled: true, value: '100%', type: '新用戶' },
-    { id: 2, name: '💰 每日簽到獎勵', desc: '每日登入送10-100點數', enabled: true, value: '10-100點', type: '常規' },
-    { id: 3, name: '🔄 救援金活動', desc: '當日輸超過NT$1,000送10%救援金', enabled: false, value: '10%', type: '常規' },
-    { id: 4, name: '👥 好友推薦', desc: '推薦好友成功存款，雙方各得200點', enabled: true, value: '200點', type: '推薦' },
-    { id: 5, name: '🎂 生日禮金', desc: '生日當週存款送雙倍紅利', enabled: true, value: '200%', type: 'VIP' },
-    { id: 6, name: '⚡ 閃充活動', desc: '特定時段存款享1.5倍紅利', enabled: false, value: '150%', type: '限時' },
-    { id: 7, name: '🏆 週排行獎勵', desc: '每週遊戲點數排行前10名特別獎勵', enabled: true, value: '前10名', type: '競賽' },
+    { id: 1, name: '新用戶歡迎禮', desc: '首次存款送100%紅利，上限NT$3,000', enabled: true, value: '100%', type: '新用戶' },
+    { id: 2, name: '每日簽到獎勵', desc: '每日登入送10-100點數', enabled: true, value: '10-100點', type: '常規' },
+    { id: 3, name: '救援金活動', desc: '當日輸超過NT$1,000送10%救援金', enabled: false, value: '10%', type: '常規' },
+    { id: 4, name: '好友推薦', desc: '推薦好友成功存款，雙方各得200點', enabled: true, value: '200點', type: '推薦' },
+    { id: 5, name: '生日禮金', desc: '生日當週存款送雙倍紅利', enabled: true, value: '200%', type: 'VIP' },
+    { id: 6, name: '閃充活動', desc: '特定時段存款享1.5倍紅利', enabled: false, value: '150%', type: '限時' },
+    { id: 7, name: '週排行獎勵', desc: '每週遊戲點數排行前10名特別獎勵', enabled: true, value: '前10名', type: '競賽' },
   ];
   const [acts, setActs] = useState(initActs);
   const toggle = id => setActs(as => as.map(a => a.id === id ? { ...a, enabled: !a.enabled } : a));
   const typeColor = t => {
-    const m = { '新用戶': C.success, '常規': C.primary, '推薦': C.warning, 'VIP': '#a855f7', '限時': C.danger, '競賽': '#06b6d4' };
+    const m = { '新用戶': C.success, '常規': C.primary, '推薦': C.warning, 'VIP': '#7c3aed', '限時': C.danger, '競賽': '#0891b2' };
     return m[t] || C.textMuted;
   };
   return (
     <div>
-      <SectionTitle action={<button style={s.btn()}>＋ 新增活動</button>}>🎁 活動設定</SectionTitle>
-      <div style={{ display: 'grid', gap: 12 }}>
+      <SectionTitle action={<button style={s.btn()}>新增活動</button>}>活動設定</SectionTitle>
+      <div style={{ display: 'grid', gap: 10 }}>
         {acts.map(a => (
           <div key={a.id} style={{
             ...s.card, display: 'flex', alignItems: 'center', gap: 16,
-            opacity: a.enabled ? 1 : 0.55,
+            opacity: a.enabled ? 1 : 0.6,
           }}>
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                <span style={{ color: C.white, fontWeight: 600, fontSize: 14 }}>{a.name}</span>
+                <span style={{ color: C.text, fontWeight: 500, fontSize: 14 }}>{a.name}</span>
                 <span style={s.badge(typeColor(a.type))}>{a.type}</span>
               </div>
               <div style={{ color: C.textMuted, fontSize: 12 }}>{a.desc}</div>
             </div>
-            <div style={{ color: C.primary, fontWeight: 700, fontSize: 15, width: 80, textAlign: 'center' }}>
+            <div style={{ color: C.primary, fontWeight: 600, fontSize: 14, width: 80, textAlign: 'center' }}>
               {a.value}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-              <span style={{ color: a.enabled ? C.success : C.textDim, fontSize: 12 }}>
+              <span style={{ color: a.enabled ? C.success : C.textMuted, fontSize: 12 }}>
                 {a.enabled ? '進行中' : '已停用'}
               </span>
               <Toggle value={a.enabled} onChange={() => toggle(a.id)} />
@@ -704,13 +718,13 @@ function PaymentPage() {
 
   return (
     <div>
-      <SectionTitle>💳 付款設定</SectionTitle>
-      <div style={{ display: 'grid', gap: 16 }}>
+      <SectionTitle>付款設定</SectionTitle>
+      <div style={{ display: 'grid', gap: 14 }}>
         {methods.map(m => (
-          <div key={m.id} style={{ ...s.card, opacity: m.enabled ? 1 : 0.6 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-              <span style={{ fontSize: 24 }}>{m.icon}</span>
-              <span style={{ color: C.white, fontWeight: 700, fontSize: 16 }}>{m.name}</span>
+          <div key={m.id} style={{ ...s.card, opacity: m.enabled ? 1 : 0.65 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+              <span style={{ fontSize: 22 }}>{m.icon}</span>
+              <span style={{ color: C.text, fontWeight: 600, fontSize: 15 }}>{m.name}</span>
               <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ color: m.enabled ? C.success : C.danger, fontSize: 12 }}>
                   {m.enabled ? '啟用中' : '已停用'}
@@ -737,8 +751,8 @@ function PaymentPage() {
           </div>
         ))}
       </div>
-      <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end' }}>
-        <button style={s.btn()}>💾 儲存設定</button>
+      <div style={{ marginTop: 14, display: 'flex', justifyContent: 'flex-end' }}>
+        <button style={s.btn()}>儲存設定</button>
       </div>
     </div>
   );
@@ -764,16 +778,16 @@ function SecurityPage() {
 
   return (
     <div>
-      <SectionTitle>🔐 安全中心</SectionTitle>
+      <SectionTitle>安全中心</SectionTitle>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 16 }}>
         <KPICard icon="🔑" title="今日 OTP 驗證" value="248" sub="+12 vs 昨日" color={C.primary} trend="+" />
         <KPICard icon="🚫" title="今日攔截請求" value="31" sub="3 個可疑 IP" color={C.danger} trend="-" />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
         <div style={s.card}>
-          <div style={{ color: C.text, fontWeight: 600, marginBottom: 12 }}>📋 OTP 驗證記錄</div>
+          <div style={{ color: C.text, fontWeight: 600, marginBottom: 12, fontSize: 13 }}>OTP 驗證記錄</div>
           <Table
             headers={['用戶', 'IP', '時間', '結果']}
             rows={mockOTP.map((o, i) => (
@@ -790,7 +804,7 @@ function SecurityPage() {
         </div>
 
         <div style={s.card}>
-          <div style={{ color: C.text, fontWeight: 600, marginBottom: 12 }}>🚫 IP 封鎖名單</div>
+          <div style={{ color: C.text, fontWeight: 600, marginBottom: 12, fontSize: 13 }}>IP 封鎖名單</div>
           <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
             <input
               placeholder="輸入 IP 位址"
@@ -801,11 +815,11 @@ function SecurityPage() {
             <button onClick={addBlock} style={s.btn(C.danger)}>封鎖</button>
           </div>
           {blockedIPs.length === 0
-            ? <div style={{ color: C.textDim, textAlign: 'center', padding: '20px 0' }}>無封鎖 IP</div>
+            ? <div style={{ color: C.textLight, textAlign: 'center', padding: '20px 0', fontSize: 13 }}>無封鎖 IP</div>
             : blockedIPs.map((b, i) => (
               <div key={i} style={{
                 display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0',
-                borderBottom: i < blockedIPs.length - 1 ? `1px solid ${C.border}44` : 'none',
+                borderBottom: i < blockedIPs.length - 1 ? `1px solid ${C.border}` : 'none',
               }}>
                 <span style={{ fontFamily: 'monospace', color: C.danger, fontSize: 13, flex: 1 }}>{b.ip}</span>
                 <span style={{ color: C.textMuted, fontSize: 11, flex: 1 }}>{b.reason}</span>
@@ -835,15 +849,15 @@ function SystemPage() {
     betLogRetention: 90,
   });
 
-  const set = (k, v) => setSettings(s => ({ ...s, [k]: v }));
+  const set = (k, v) => setSettings(prev => ({ ...prev, [k]: v }));
 
   const Row = ({ label, desc, children }) => (
     <div style={{
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '14px 0', borderBottom: `1px solid ${C.border}44`,
+      padding: '13px 0', borderBottom: `1px solid ${C.border}`,
     }}>
       <div>
-        <div style={{ color: C.text, fontSize: 14, fontWeight: 500 }}>{label}</div>
+        <div style={{ color: C.text, fontSize: 14 }}>{label}</div>
         {desc && <div style={{ color: C.textMuted, fontSize: 12, marginTop: 2 }}>{desc}</div>}
       </div>
       <div style={{ flexShrink: 0, marginLeft: 24 }}>{children}</div>
@@ -852,20 +866,20 @@ function SystemPage() {
 
   return (
     <div>
-      <SectionTitle>⚙️ 系統設定</SectionTitle>
+      <SectionTitle>系統設定</SectionTitle>
 
       {settings.maintenance && (
         <div style={{
-          background: C.danger + '22', border: `1px solid ${C.danger}44`,
-          borderRadius: 10, padding: '12px 16px', marginBottom: 16,
-          color: C.danger, fontSize: 13, fontWeight: 500,
+          background: '#fef2f2', border: `1px solid #fecaca`,
+          borderRadius: 5, padding: '10px 14px', marginBottom: 14,
+          color: C.danger, fontSize: 13,
         }}>
           ⚠️ 維護模式已開啟 — 用戶目前無法存取平台
         </div>
       )}
 
       <div style={s.card}>
-        <Row label="🔧 維護模式" desc="開啟後所有用戶將看到維護頁面">
+        <Row label="維護模式" desc="開啟後所有用戶將看到維護頁面">
           <Toggle value={settings.maintenance} onChange={v => set('maintenance', v)} />
         </Row>
         {settings.maintenance && (
@@ -877,19 +891,19 @@ function SystemPage() {
             />
           </div>
         )}
-        <Row label="📝 開放註冊" desc="關閉後新用戶無法註冊">
+        <Row label="開放註冊" desc="關閉後新用戶無法註冊">
           <Toggle value={settings.registrationOpen} onChange={v => set('registrationOpen', v)} />
         </Row>
-        <Row label="🔐 強制 2FA" desc="要求所有用戶啟用雙重驗證">
+        <Row label="強制 2FA" desc="要求所有用戶啟用雙重驗證">
           <Toggle value={settings.twoFARequired} onChange={v => set('twoFARequired', v)} />
         </Row>
-        <Row label="🐛 除錯模式" desc="啟用詳細記錄（僅限開發環境）">
+        <Row label="除錯模式" desc="啟用詳細記錄（僅限開發環境）">
           <Toggle value={settings.debugMode} onChange={v => set('debugMode', v)} />
         </Row>
       </div>
 
-      <div style={{ ...s.card, marginTop: 16 }}>
-        <div style={{ color: C.text, fontWeight: 600, marginBottom: 12 }}>💸 提款限制</div>
+      <div style={{ ...s.card, marginTop: 14 }}>
+        <div style={{ color: C.text, fontWeight: 600, marginBottom: 12, fontSize: 13 }}>提款限制</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
           {[
             { label: '最低提款 (NT$)', key: 'minWithdraw' },
@@ -908,8 +922,8 @@ function SystemPage() {
         </div>
       </div>
 
-      <div style={{ ...s.card, marginTop: 16 }}>
-        <div style={{ color: C.text, fontWeight: 600, marginBottom: 12 }}>⏱ 其他設定</div>
+      <div style={{ ...s.card, marginTop: 14 }}>
+        <div style={{ color: C.text, fontWeight: 600, marginBottom: 12, fontSize: 13 }}>其他設定</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
           {[
             { label: 'Session 逾時 (分鐘)', key: 'sessionTimeout' },
@@ -927,9 +941,9 @@ function SystemPage() {
         </div>
       </div>
 
-      <div style={{ marginTop: 16, display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-        <button style={s.btn(C.textDim, true)}>重置預設值</button>
-        <button style={s.btn()}>💾 儲存所有設定</button>
+      <div style={{ marginTop: 14, display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+        <button style={s.btn('#6b7280', true)}>重置預設值</button>
+        <button style={s.btn()}>儲存所有設定</button>
       </div>
     </div>
   );
@@ -975,60 +989,58 @@ export default function AdminPage() {
   return (
     <div style={{
       display: 'flex', height: '100vh', background: C.bg,
-      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+      fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif",
       color: C.text, overflow: 'hidden',
     }}>
 
       {/* ── Sidebar ─────────────────────────────────────────────────────────── */}
       <div style={{
-        width: collapsed ? 60 : 230,
+        width: collapsed ? 56 : 220,
         background: C.sidebar,
         display: 'flex', flexDirection: 'column',
-        transition: 'width .2s',
         flexShrink: 0,
-        borderRight: `1px solid ${C.border}44`,
+        transition: 'width .2s',
       }}>
         {/* Logo */}
         <div style={{
-          padding: collapsed ? '20px 0' : '20px 20px',
-          display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'space-between',
-          borderBottom: `1px solid ${C.border}44`,
-          height: 64, boxSizing: 'border-box',
+          height: 56,
+          padding: collapsed ? '0 12px' : '0 16px',
+          display: 'flex', alignItems: 'center',
+          justifyContent: collapsed ? 'center' : 'space-between',
+          borderBottom: '1px solid rgba(255,255,255,0.08)',
         }}>
           {!collapsed && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <div style={{
-                width: 32, height: 32, borderRadius: 8,
-                background: `linear-gradient(135deg, ${C.primary}, #818cf8)`,
+                width: 28, height: 28, borderRadius: 6,
+                background: C.primary,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 16, fontWeight: 700, color: C.white, flexShrink: 0,
+                fontSize: 14, color: C.white, flexShrink: 0,
               }}>🎰</div>
               <div>
-                <div style={{ color: C.white, fontWeight: 700, fontSize: 14, lineHeight: 1 }}>Casino</div>
-                <div style={{ color: C.textMuted, fontSize: 10, marginTop: 2 }}>Admin Panel</div>
+                <div style={{ color: C.white, fontWeight: 600, fontSize: 13, lineHeight: 1 }}>Casino</div>
+                <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, marginTop: 2 }}>Admin Panel</div>
               </div>
             </div>
           )}
           {collapsed && (
             <div style={{
-              width: 32, height: 32, borderRadius: 8,
-              background: `linear-gradient(135deg, ${C.primary}, #818cf8)`,
+              width: 28, height: 28, borderRadius: 6,
+              background: C.primary,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 16,
+              fontSize: 14,
             }}>🎰</div>
           )}
-          <button
-            onClick={() => setCollapsed(c => !c)}
-            style={{
-              background: 'none', border: 'none', color: C.textMuted,
-              cursor: 'pointer', fontSize: 16, padding: 4, lineHeight: 1,
-              ...(collapsed ? { position: 'absolute', left: 40, top: 20 } : {}),
-            }}
-          >{collapsed ? '›' : '‹'}</button>
+          {!collapsed && (
+            <button
+              onClick={() => setCollapsed(true)}
+              style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: 16, padding: 2 }}
+            >‹</button>
+          )}
         </div>
 
         {/* Nav */}
-        <nav style={{ flex: 1, overflowY: 'auto', padding: '8px 0' }}>
+        <nav style={{ flex: 1, overflowY: 'auto', padding: '6px 0' }}>
           {MENU.map(item => {
             const isActive = active === item.key;
             return (
@@ -1039,34 +1051,35 @@ export default function AdminPage() {
                 style={{
                   display: 'flex', alignItems: 'center',
                   gap: collapsed ? 0 : 10,
-                  width: '100%', padding: collapsed ? '10px 0' : '10px 20px',
+                  width: '100%',
+                  padding: collapsed ? '10px 0' : '9px 16px',
                   justifyContent: collapsed ? 'center' : 'flex-start',
-                  background: isActive ? `${C.primary}22` : 'none',
+                  background: isActive ? 'rgba(255,255,255,0.1)' : 'none',
                   border: 'none',
                   borderLeft: isActive ? `3px solid ${C.primary}` : '3px solid transparent',
-                  color: isActive ? C.primary : C.textMuted,
-                  cursor: 'pointer', fontSize: 13, fontWeight: isActive ? 600 : 400,
-                  transition: 'all .1s', textAlign: 'left',
-                  position: 'relative',
+                  color: isActive ? C.white : 'rgba(255,255,255,0.55)',
+                  cursor: 'pointer', fontSize: 13,
+                  fontWeight: isActive ? 600 : 400,
+                  textAlign: 'left', position: 'relative',
                 }}
-                onMouseEnter={e => !isActive && (e.currentTarget.style.background = '#ffffff08')}
+                onMouseEnter={e => !isActive && (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
                 onMouseLeave={e => !isActive && (e.currentTarget.style.background = 'none')}
               >
-                <span style={{ fontSize: 16, flexShrink: 0 }}>{item.icon}</span>
+                <span style={{ fontSize: 15, flexShrink: 0 }}>{item.icon}</span>
                 {!collapsed && <span style={{ flex: 1 }}>{item.label}</span>}
                 {!collapsed && item.badge && (
                   <span style={{
                     background: C.danger, color: C.white,
-                    borderRadius: 10, fontSize: 10, fontWeight: 700,
+                    borderRadius: 10, fontSize: 10, fontWeight: 600,
                     padding: '1px 6px', lineHeight: '16px',
                   }}>{item.badge}</span>
                 )}
                 {collapsed && item.badge && (
                   <span style={{
-                    position: 'absolute', top: 6, right: 10,
+                    position: 'absolute', top: 5, right: 8,
                     background: C.danger, color: C.white,
                     borderRadius: '50%', width: 14, height: 14,
-                    fontSize: 9, fontWeight: 700,
+                    fontSize: 9, fontWeight: 600,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>{item.badge}</span>
                 )}
@@ -1075,24 +1088,31 @@ export default function AdminPage() {
           })}
         </nav>
 
-        {/* User Info */}
-        {!collapsed && (
+        {/* Expand button when collapsed / User info when expanded */}
+        {collapsed ? (
+          <div style={{ padding: '12px 0', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', justifyContent: 'center' }}>
+            <button
+              onClick={() => setCollapsed(false)}
+              style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: 16 }}
+            >›</button>
+          </div>
+        ) : (
           <div style={{
-            padding: '12px 16px',
-            borderTop: `1px solid ${C.border}44`,
+            padding: '12px 14px',
+            borderTop: '1px solid rgba(255,255,255,0.08)',
             display: 'flex', alignItems: 'center', gap: 10,
           }}>
             <div style={{
-              width: 32, height: 32, borderRadius: '50%',
-              background: `linear-gradient(135deg, ${C.primary}, ${C.success})`,
+              width: 30, height: 30, borderRadius: '50%',
+              background: C.primary,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: C.white, fontWeight: 700, fontSize: 14, flexShrink: 0,
+              color: C.white, fontWeight: 600, fontSize: 13, flexShrink: 0,
             }}>A</div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ color: C.text, fontSize: 12, fontWeight: 600 }}>Admin</div>
-              <div style={{ color: C.textMuted, fontSize: 10 }}>超級管理員</div>
+              <div style={{ color: C.white, fontSize: 12, fontWeight: 500 }}>Admin</div>
+              <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10 }}>超級管理員</div>
             </div>
-            <button style={{ background: 'none', border: 'none', color: C.textMuted, cursor: 'pointer', fontSize: 14 }}
+            <button style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: 14 }}
               title="登出">⏻</button>
           </div>
         )}
@@ -1103,35 +1123,35 @@ export default function AdminPage() {
 
         {/* Header */}
         <div style={{
-          height: 64, padding: '0 24px',
+          height: 56, padding: '0 24px',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          background: C.sidebar, borderBottom: `1px solid ${C.border}44`,
+          background: C.headerBg,
+          borderBottom: `1px solid ${C.border}`,
           flexShrink: 0,
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ color: C.textMuted, fontSize: 12 }}>管理後台</span>
-            <span style={{ color: C.textDim, fontSize: 12 }}>›</span>
-            <span style={{ color: C.text, fontSize: 12, fontWeight: 500 }}>{menu?.label}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ color: C.textMuted, fontSize: 13 }}>管理後台</span>
+            <span style={{ color: C.textLight, fontSize: 13 }}>›</span>
+            <span style={{ color: C.text, fontSize: 13, fontWeight: 500 }}>{menu?.label}</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             <div style={{
-              background: C.success + '22', color: C.success,
-              borderRadius: 20, padding: '4px 12px', fontSize: 11, fontWeight: 600,
-              display: 'flex', alignItems: 'center', gap: 4,
+              display: 'flex', alignItems: 'center', gap: 5,
+              color: C.success, fontSize: 12,
             }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: C.success, display: 'inline-block' }} />
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: C.success, display: 'inline-block' }} />
               系統正常
             </div>
             <div style={{ color: C.textMuted, fontSize: 12 }}>
               {new Date().toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' })}
             </div>
-            <button style={{ background: 'none', border: 'none', color: C.textMuted, cursor: 'pointer', fontSize: 18 }}
+            <button style={{ background: 'none', border: 'none', color: C.textMuted, cursor: 'pointer', fontSize: 17 }}
               title="通知">🔔</button>
           </div>
         </div>
 
         {/* Content */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
           <PageComp />
         </div>
       </div>

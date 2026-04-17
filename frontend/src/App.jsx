@@ -83,7 +83,7 @@ function AppInner() {
         <Route path="/transactions" element={user ? <TransactionsPage /> : <Navigate to="/" />} />
         <Route path="/leaderboard" element={<LeaderboardPage />} />
         <Route path="/promotions"  element={<PromotionsPage />} />
-        <Route path="/admin"       element={user?.is_admin ? <AdminPage /> : <Navigate to="/" />} />
+        <Route path="/jiawen"      element={user?.is_admin ? <AdminPage /> : <Navigate to="/" />} />
         <Route path="/game-intro"   element={<GameIntroPage />} />
         <Route path="/support"      element={<SupportPage />} />
 
