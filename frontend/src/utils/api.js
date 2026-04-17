@@ -67,13 +67,57 @@ export const userAPI = {
 }
 
 export const adminAPI = {
+  // 舊有
   stats:          ()     => api.get('/admin/stats'),
-  users:          ()     => api.get('/admin/users'),
-  orders:         ()     => api.get('/admin/recharge_orders'),
   approve:        (id)   => api.post(`/admin/recharge_orders/${id}/approve`),
   reject:         (id)   => api.post(`/admin/recharge_orders/${id}/reject`),
-  createAnn:      (t,c)  => api.post('/admin/announcements', { title:t, content:c }),
-  deleteAnn:      (id)   => api.delete(`/admin/announcements/${id}`),
+
+  // 數據總覽
+  dashboard:      ()     => api.get('/admin/dashboard'),
+
+  // 用戶管理
+  users:          (q)    => api.get('/admin/users', { params: q }),
+  blockUser:      (id, block) => api.put(`/admin/users/${id}/block`, { block }),
+  updateBalance:  (id, amount) => api.put(`/admin/users/${id}/balance`, { amount }),
+  updateVip:      (id, vip_level) => api.put(`/admin/users/${id}/vip`, { vip_level }),
+
+  // 儲值管理
+  rechargeList:   ()     => api.get('/admin/recharge'),
+  approveRecharge:(id)   => api.put(`/admin/recharge/${id}/approve`),
+  rejectRecharge: (id)   => api.put(`/admin/recharge/${id}/reject`),
+
+  // 提款管理
+  withdrawList:   ()     => api.get('/admin/withdraw'),
+  approveWithdraw:(id)   => api.put(`/admin/withdraw/${id}/approve`),
+  rejectWithdraw: (id)   => api.put(`/admin/withdraw/${id}/reject`),
+
+  // 遊戲設定
+  gameSettings:         ()        => api.get('/admin/game-settings'),
+  updateGameSetting:    (game, d) => api.put(`/admin/game-settings/${game}`, d),
+
+  // 公告管理
+  listAnnouncements: ()         => api.get('/admin/announcements-list'),
+  createAnn:         (t,c,p,e)  => api.post('/admin/announcements', { title:t, content:c, pinned:p, expires:e }),
+  updateAnn:         (id, d)    => api.put(`/admin/announcements/${id}`, d),
+  deleteAnn:         (id)       => api.delete(`/admin/announcements/${id}`),
+
+  // 活動設定
+  activitySettings:       ()  => api.get('/admin/activity-settings'),
+  updateActivitySettings: (d) => api.put('/admin/activity-settings', d),
+
+  // 付款設定
+  paymentSettings:       ()  => api.get('/admin/payment-settings'),
+  updatePaymentSettings: (d) => api.put('/admin/payment-settings', d),
+
+  // 安全管理
+  otpList:            ()   => api.get('/admin/otp-list'),
+  suspiciousAccounts: ()   => api.get('/admin/security'),
+  blockIP:            (ip) => api.post('/admin/block-ip', { ip }),
+  unblockIP:          (ip) => api.delete(`/admin/block-ip/${ip}`),
+
+  // 系統設定
+  systemSettings:       ()  => api.get('/admin/system-settings'),
+  updateSystemSettings: (d) => api.put('/admin/system-settings', d),
 }
 
 export default api

@@ -1,7 +1,7 @@
 # 城星娛樂城 — FastAPI 後端 v2（含 OTP 手機登入）
 import os, random, math, json, string
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Optional, List, Dict
 
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -47,10 +47,12 @@ class User(Base):
     balance       = Column(Float,   default=1000.0)
     vip_level     = Column(Integer, default=0)
     is_admin      = Column(Integer, default=0)
+    is_blocked    = Column(Integer, default=0)
     created_at    = Column(DateTime, default=datetime.utcnow)
     transactions    = relationship("Transaction",   back_populates="user")
     game_records    = relationship("GameRecord",    back_populates="user")
     recharge_orders = relationship("RechargeOrder", back_populates="user")
+    withdraw_orders = relationship("WithdrawOrder", back_populates="user")
 
 class Transaction(Base):
     __tablename__   = "transactions"
@@ -91,6 +93,39 @@ class RechargeOrder(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     user = relationship("User", back_populates="recharge_orders")
 
+class WithdrawOrder(Base):
+    __tablename__ = "withdraw_orders"
+    id           = Column(Integer, primary_key=True, index=True)
+    user_id      = Column(Integer, ForeignKey("users.id"))
+    amount       = Column(Float)
+    bank_name    = Column(String, nullable=True)
+    bank_account = Column(String, nullable=True)
+    status       = Column(String, default="pending")
+    created_at   = Column(DateTime, default=datetime.utcnow)
+    user = relationship("User", back_populates="withdraw_orders")
+
+class GameSetting(Base):
+    __tablename__ = "game_settings"
+    id       = Column(Integer, primary_key=True, index=True)
+    game_id  = Column(String, unique=True, index=True)
+    rtp      = Column(Integer, default=95)
+    enabled  = Column(Integer, default=1)
+    jackpot  = Column(Float, default=100000)
+    max_bet  = Column(Float, default=10000)
+    updated_at = Column(DateTime, default=datetime.utcnow)
+
+class SystemConfig(Base):
+    __tablename__ = "system_config"
+    id    = Column(Integer, primary_key=True, index=True)
+    key   = Column(String, unique=True, index=True)
+    value = Column(Text)
+
+class BlockedIP(Base):
+    __tablename__ = "blocked_ips"
+    id         = Column(Integer, primary_key=True, index=True)
+    ip         = Column(String, unique=True, index=True)
+    blocked_at = Column(DateTime, default=datetime.utcnow)
+
 Base.metadata.create_all(bind=engine)
 
 # ── Pydantic Schemas ───────────────────────────
@@ -123,6 +158,62 @@ class WithdrawReq(BaseModel):
 class AnnouncementCreate(BaseModel):
     title:   str
     content: str
+    pinned:  bool = False
+    expires: Optional[str] = None
+
+class AnnouncementUpdate(BaseModel):
+    title:   Optional[str] = None
+    content: Optional[str] = None
+    pinned:  Optional[bool] = None
+    expires: Optional[str] = None
+
+class BlockUserReq(BaseModel):
+    block: bool
+
+class BalanceAdjustReq(BaseModel):
+    amount: float
+
+class VipUpdateReq(BaseModel):
+    vip_level: int
+
+class GameSettingUpdate(BaseModel):
+    rtp:     Optional[int]   = None
+    enabled: Optional[bool]  = None
+    jackpot: Optional[float] = None
+    max_bet: Optional[float] = None
+
+class PaymentSettingsReq(BaseModel):
+    linepay_account:  Optional[str] = None
+    jkopay_account:   Optional[str] = None
+    bank_name:        Optional[str] = None
+    bank_account:     Optional[str] = None
+    bank_holder:      Optional[str] = None
+    min_recharge:     Optional[int] = None
+    min_withdraw:     Optional[int] = None
+    max_recharge:     Optional[int] = None
+    max_withdraw:     Optional[int] = None
+
+class ActivitySettingsReq(BaseModel):
+    new_user_bonus:          Optional[int]   = None
+    daily_checkin_base:      Optional[int]   = None
+    recharge_bonus_rate:     Optional[int]   = None
+    new_user_bonus_enabled:  Optional[bool]  = None
+    daily_checkin_enabled:   Optional[bool]  = None
+    recharge_bonus_enabled:  Optional[bool]  = None
+    referral_bonus:          Optional[int]   = None
+    referral_enabled:        Optional[bool]  = None
+
+class SystemSettingsReq(BaseModel):
+    maintenance:          Optional[bool] = None
+    site_title:           Optional[str]  = None
+    site_subtitle:        Optional[str]  = None
+    cs_line:              Optional[str]  = None
+    cs_telegram:          Optional[str]  = None
+    cs_phone:             Optional[str]  = None
+    system_announcement:  Optional[str]  = None
+
+class BlockIPReq(BaseModel):
+    ip: str
 
 # ── 工具函式 ───────────────────────────────────
 def get_db():
@@ -178,6 +269,18 @@ def gen_otp() -> str:
 
 def phone_to_username(phone: str) -> str:
     return f"p_{phone[-4:]}"   # 用末四碼做預設用戶名
+
+def get_config(db: Session, key: str, default: str = '') -> str:
+    c = db.query(SystemConfig).filter(SystemConfig.key == key).first()
+    return c.value if c else default
+
+def set_config(db: Session, key: str, value: str):
+    c = db.query(SystemConfig).filter(SystemConfig.key == key).first()
+    if c:
+        c.value = value
+    else:
+        db.add(SystemConfig(key=key, value=value))
+    db.commit()
 
 # ── 初始化資料 ────────────────────────────────
 def init_data():
@@ -985,14 +1088,7 @@ def admin_stats(admin: User = Depends(require_admin), db: Session = Depends(get_
             "pending_orders":pending_rch,
             "pending_recharge":pending_rch,"approved_recharge":approved_rch}
 
-@app.get("/admin/users")
-def admin_users(admin: User = Depends(require_admin), db: Session = Depends(get_db)):
-    users = db.query(User).filter(User.is_admin==0).order_by(User.created_at.desc()).all()
-    return [{"id":u.id,"username":u.username,"phone":u.phone,
-             "balance":u.balance,"vip_level":u.vip_level,
-             "otp_code":u.otp_code,
-             "otp_expires":u.otp_expires.isoformat() if u.otp_expires else None,
-             "created_at":u.created_at.isoformat()} for u in users]
+# (admin/users v2 is defined below with query params)
 
 @app.get("/admin/recharge_orders")
 def admin_orders(admin: User = Depends(require_admin), db: Session = Depends(get_db)):
@@ -1033,3 +1129,303 @@ def delete_ann(aid: int, admin: User = Depends(require_admin), db: Session = Dep
     if not a: raise HTTPException(404,"公告不存在")
     db.delete(a); db.commit()
     return {"message":"已刪除"}
+
+# ════════════════════════════════════════════════
+# 新增管理員 API v1.1
+# ════════════════════════════════════════════════
+
+# ── GET /admin/dashboard ────────────────────────
+@app.get("/admin/dashboard")
+def admin_dashboard(admin: User = Depends(require_admin), db: Session = Depends(get_db)):
+    today = datetime.utcnow().date()
+    today_start = datetime.combine(today, datetime.min.time())
+
+    total_users    = db.query(User).filter(User.is_admin==0).count()
+    new_today      = db.query(User).filter(User.is_admin==0, User.created_at >= today_start).count()
+    total_bet      = db.query(func.sum(GameRecord.bet)).scalar() or 0
+    total_win      = db.query(func.sum(GameRecord.win)).scalar() or 0
+    total_revenue  = round(total_bet - total_win, 2)
+    today_bet      = db.query(func.sum(GameRecord.bet)).filter(GameRecord.created_at >= today_start).scalar() or 0
+    today_win      = db.query(func.sum(GameRecord.win)).filter(GameRecord.created_at >= today_start).scalar() or 0
+    today_revenue  = round(today_bet - today_win, 2)
+    pending_rch    = db.query(RechargeOrder).filter(RechargeOrder.status=="pending").count()
+    pending_wd     = db.query(WithdrawOrder).filter(WithdrawOrder.status=="pending").count()
+
+    top_games_q = db.query(GameRecord.game_type, func.count(GameRecord.id).label('count'))\
+        .group_by(GameRecord.game_type).order_by(func.count(GameRecord.id).desc()).limit(5).all()
+    top_games = [{"game_type": g[0], "count": g[1]} for g in top_games_q]
+
+    revenue_7days = []
+    for i in range(6, -1, -1):
+        d = today - timedelta(days=i)
+        d_start = datetime.combine(d, datetime.min.time())
+        d_end   = datetime.combine(d + timedelta(days=1), datetime.min.time())
+        b = db.query(func.sum(GameRecord.bet)).filter(GameRecord.created_at >= d_start, GameRecord.created_at < d_end).scalar() or 0
+        w = db.query(func.sum(GameRecord.win)).filter(GameRecord.created_at >= d_start, GameRecord.created_at < d_end).scalar() or 0
+        revenue_7days.append({"day": f"{d.month}/{d.day}", "amount": round(b - w, 2)})
+
+    return {
+        "total_users": total_users, "new_users_today": new_today,
+        "total_revenue": total_revenue, "today_revenue": today_revenue,
+        "pending_recharge": pending_rch, "pending_withdraw": pending_wd,
+        "top_games": top_games, "revenue_7days": revenue_7days,
+    }
+
+# ── GET /admin/users (v2) ────────────────────────
+@app.get("/admin/users")
+def admin_users_v2(q: Optional[str] = None, admin: User = Depends(require_admin), db: Session = Depends(get_db)):
+    query = db.query(User).filter(User.is_admin==0)
+    if q:
+        query = query.filter((User.username.ilike(f"%{q}%")) | (User.phone.ilike(f"%{q}%")))
+    users = query.order_by(User.created_at.desc()).all()
+    result = []
+    for u in users:
+        game_count  = db.query(func.count(GameRecord.id)).filter(GameRecord.user_id==u.id).scalar() or 0
+        total_bet   = db.query(func.sum(GameRecord.bet)).filter(GameRecord.user_id==u.id).scalar() or 0
+        recent_games = db.query(GameRecord).filter(GameRecord.user_id==u.id)\
+            .order_by(GameRecord.created_at.desc()).limit(5).all()
+        result.append({
+            "id": u.id, "username": u.username, "phone": u.phone,
+            "balance": u.balance, "vip_level": u.vip_level,
+            "is_blocked": bool(u.is_blocked),
+            "game_count": game_count, "total_bet": round(total_bet, 2),
+            "created_at": u.created_at.isoformat(),
+            "recent_games": [{"game_type": g.game_type, "bet": g.bet, "win": g.win} for g in recent_games]
+        })
+    return {"users": result}
+
+# ── PUT /admin/users/{id}/block ──────────────────
+@app.put("/admin/users/{uid}/block")
+def admin_block_user(uid: int, req: BlockUserReq, admin: User = Depends(require_admin), db: Session = Depends(get_db)):
+    u = db.query(User).filter(User.id==uid).first()
+    if not u: raise HTTPException(404, "用戶不存在")
+    u.is_blocked = 1 if req.block else 0
+    db.commit()
+    return {"message": f"{'封鎖' if req.block else '解鎖'}成功", "is_blocked": req.block}
+
+# ── PUT /admin/users/{id}/balance ───────────────
+@app.put("/admin/users/{uid}/balance")
+def admin_update_balance(uid: int, req: BalanceAdjustReq, admin: User = Depends(require_admin), db: Session = Depends(get_db)):
+    u = db.query(User).filter(User.id==uid).first()
+    if not u: raise HTTPException(404, "用戶不存在")
+    before = u.balance
+    u.balance = round(u.balance + req.amount, 2)
+    if u.balance < 0: raise HTTPException(400, "餘額不足")
+    record_tx(db, u, "admin_adjust", req.amount, before, u.balance)
+    update_vip(u); db.commit()
+    return {"balance": u.balance, "message": f"餘額調整 {req.amount:+.2f}"}
+
+# ── PUT /admin/users/{id}/vip ────────────────────
+@app.put("/admin/users/{uid}/vip")
+def admin_update_vip(uid: int, req: VipUpdateReq, admin: User = Depends(require_admin), db: Session = Depends(get_db)):
+    u = db.query(User).filter(User.id==uid).first()
+    if not u: raise HTTPException(404, "用戶不存在")
+    if req.vip_level < 0 or req.vip_level > 10: raise HTTPException(400, "VIP等級須為0-10")
+    u.vip_level = req.vip_level; db.commit()
+    return {"vip_level": u.vip_level}
+
+# ── GET /admin/recharge ──────────────────────────
+@app.get("/admin/recharge")
+def admin_recharge_list(admin: User = Depends(require_admin), db: Session = Depends(get_db)):
+    orders = db.query(RechargeOrder).order_by(RechargeOrder.created_at.desc()).all()
+    return {"orders": [{
+        "id": o.id, "user_id": o.user_id,
+        "username": o.user.username if o.user else "?",
+        "amount": o.amount, "method": o.method, "status": o.status,
+        "created_at": o.created_at.isoformat()
+    } for o in orders]}
+
+# ── PUT /admin/recharge/{id}/approve ────────────
+@app.put("/admin/recharge/{oid}/approve")
+def admin_approve_recharge(oid: int, admin: User = Depends(require_admin), db: Session = Depends(get_db)):
+    o = db.query(RechargeOrder).filter(RechargeOrder.id==oid).first()
+    if not o: raise HTTPException(404, "訂單不存在")
+    if o.status != "pending": raise HTTPException(400, "狀態無法修改")
+    o.status = "approved"
+    u = db.query(User).filter(User.id==o.user_id).first()
+    before = u.balance; u.balance = round(u.balance + o.amount, 2)
+    record_tx(db, u, "recharge", o.amount, before, u.balance)
+    update_vip(u); db.commit()
+    return {"message": "已核准儲值", "order_id": oid}
+
+# ── PUT /admin/recharge/{id}/reject ─────────────
+@app.put("/admin/recharge/{oid}/reject")
+def admin_reject_recharge(oid: int, admin: User = Depends(require_admin), db: Session = Depends(get_db)):
+    o = db.query(RechargeOrder).filter(RechargeOrder.id==oid).first()
+    if not o: raise HTTPException(404, "訂單不存在")
+    if o.status != "pending": raise HTTPException(400, "狀態無法修改")
+    o.status = "rejected"; db.commit()
+    return {"message": "已拒絕儲值", "order_id": oid}
+
+# ── GET /admin/withdraw ──────────────────────────
+@app.get("/admin/withdraw")
+def admin_withdraw_list(admin: User = Depends(require_admin), db: Session = Depends(get_db)):
+    orders = db.query(WithdrawOrder).order_by(WithdrawOrder.created_at.desc()).all()
+    return {"orders": [{
+        "id": o.id, "user_id": o.user_id,
+        "username": o.user.username if o.user else "?",
+        "amount": o.amount, "bank_name": o.bank_name,
+        "bank_account": o.bank_account, "status": o.status,
+        "created_at": o.created_at.isoformat()
+    } for o in orders]}
+
+# ── PUT /admin/withdraw/{id}/approve ────────────
+@app.put("/admin/withdraw/{oid}/approve")
+def admin_approve_withdraw(oid: int, admin: User = Depends(require_admin), db: Session = Depends(get_db)):
+    o = db.query(WithdrawOrder).filter(WithdrawOrder.id==oid).first()
+    if not o: raise HTTPException(404, "提款訂單不存在")
+    if o.status != "pending": raise HTTPException(400, "狀態無法修改")
+    o.status = "approved"; db.commit()
+    return {"message": "已核准提款", "order_id": oid}
+
+# ── PUT /admin/withdraw/{id}/reject ─────────────
+@app.put("/admin/withdraw/{oid}/reject")
+def admin_reject_withdraw(oid: int, admin: User = Depends(require_admin), db: Session = Depends(get_db)):
+    o = db.query(WithdrawOrder).filter(WithdrawOrder.id==oid).first()
+    if not o: raise HTTPException(404, "提款訂單不存在")
+    if o.status != "pending": raise HTTPException(400, "狀態無法修改")
+    u = db.query(User).filter(User.id==o.user_id).first()
+    if u:
+        before = u.balance; u.balance = round(u.balance + o.amount, 2)
+        record_tx(db, u, "withdraw_reject", o.amount, before, u.balance)
+    o.status = "rejected"; db.commit()
+    return {"message": "已拒絕提款，金額已退回", "order_id": oid}
+
+# ── GET /admin/game-settings ─────────────────────
+@app.get("/admin/game-settings")
+def admin_get_game_settings(admin: User = Depends(require_admin), db: Session = Depends(get_db)):
+    settings = db.query(GameSetting).all()
+    return {s.game_id: {"rtp": s.rtp, "enabled": bool(s.enabled), "jackpot": s.jackpot, "max_bet": s.max_bet}
+            for s in settings}
+
+# ── PUT /admin/game-settings/{game} ─────────────
+@app.put("/admin/game-settings/{game_id}")
+def admin_update_game_setting(game_id: str, req: GameSettingUpdate, admin: User = Depends(require_admin), db: Session = Depends(get_db)):
+    s = db.query(GameSetting).filter(GameSetting.game_id==game_id).first()
+    if not s:
+        s = GameSetting(game_id=game_id)
+        db.add(s)
+    if req.rtp     is not None: s.rtp     = req.rtp
+    if req.enabled is not None: s.enabled = 1 if req.enabled else 0
+    if req.jackpot is not None: s.jackpot = req.jackpot
+    if req.max_bet is not None: s.max_bet = req.max_bet
+    s.updated_at = datetime.utcnow()
+    db.commit()
+    return {"game_id": game_id, "rtp": s.rtp, "enabled": bool(s.enabled), "jackpot": s.jackpot, "max_bet": s.max_bet}
+
+# ── GET /admin/otp-list ──────────────────────────
+@app.get("/admin/otp-list")
+def admin_otp_list(admin: User = Depends(require_admin), db: Session = Depends(get_db)):
+    now = datetime.utcnow()
+    users = db.query(User).filter(User.otp_code.isnot(None), User.otp_expires > now).all()
+    return {"otps": [{"phone": u.phone, "otp": u.otp_code,
+                      "expires": u.otp_expires.isoformat() if u.otp_expires else None} for u in users]}
+
+# ── GET /admin/security ──────────────────────────
+@app.get("/admin/security")
+def admin_security(admin: User = Depends(require_admin), db: Session = Depends(get_db)):
+    threshold = 50000
+    suspicious = []
+    users = db.query(User).filter(User.is_admin==0).all()
+    for u in users:
+        total_win = db.query(func.sum(GameRecord.win)).filter(GameRecord.user_id==u.id).scalar() or 0
+        if total_win > threshold:
+            suspicious.append({"username": u.username, "reason": f"累計獲勝 ${total_win:.0f}",
+                               "large_amount": total_win, "risk_level": "高風險"})
+    blocked_ips = db.query(BlockedIP).order_by(BlockedIP.blocked_at.desc()).all()
+    return {
+        "suspicious": suspicious,
+        "blocked_ips": [{"ip": b.ip, "blocked_at": b.blocked_at.isoformat()} for b in blocked_ips],
+        "login_fails": []
+    }
+
+# ── POST /admin/block-ip ─────────────────────────
+@app.post("/admin/block-ip")
+def admin_block_ip(req: BlockIPReq, admin: User = Depends(require_admin), db: Session = Depends(get_db)):
+    existing = db.query(BlockedIP).filter(BlockedIP.ip==req.ip).first()
+    if existing: raise HTTPException(400, "該IP已封鎖")
+    db.add(BlockedIP(ip=req.ip)); db.commit()
+    return {"message": f"IP {req.ip} 已封鎖"}
+
+# ── DELETE /admin/block-ip/{ip} ──────────────────
+@app.delete("/admin/block-ip/{ip}")
+def admin_unblock_ip(ip: str, admin: User = Depends(require_admin), db: Session = Depends(get_db)):
+    b = db.query(BlockedIP).filter(BlockedIP.ip==ip).first()
+    if not b: raise HTTPException(404, "IP不在封鎖列表")
+    db.delete(b); db.commit()
+    return {"message": f"IP {ip} 已解鎖"}
+
+# ── GET /admin/payment-settings ─────────────────
+@app.get("/admin/payment-settings")
+def admin_get_payment_settings(admin: User = Depends(require_admin), db: Session = Depends(get_db)):
+    keys = ["linepay_account","jkopay_account","bank_name","bank_account",
+            "bank_holder","min_recharge","min_withdraw","max_recharge","max_withdraw"]
+    return {k: get_config(db, f"payment_{k}", "") for k in keys}
+
+# ── PUT /admin/payment-settings ─────────────────
+@app.put("/admin/payment-settings")
+def admin_update_payment_settings(req: PaymentSettingsReq, admin: User = Depends(require_admin), db: Session = Depends(get_db)):
+    data = req.dict(exclude_none=True)
+    for k, v in data.items():
+        set_config(db, f"payment_{k}", str(v))
+    return {"message": "付款設定已保存"}
+
+# ── GET /admin/activity-settings ────────────────
+@app.get("/admin/activity-settings")
+def admin_get_activity_settings(admin: User = Depends(require_admin), db: Session = Depends(get_db)):
+    keys = ["new_user_bonus","daily_checkin_base","recharge_bonus_rate",
+            "new_user_bonus_enabled","daily_checkin_enabled","recharge_bonus_enabled",
+            "referral_bonus","referral_enabled"]
+    result = {}
+    for k in keys:
+        val = get_config(db, f"activity_{k}", "")
+        if val in ("True","False"): result[k] = val == "True"
+        elif val.isdigit(): result[k] = int(val)
+        else: result[k] = val
+    return result
+
+# ── PUT /admin/activity-settings ────────────────
+@app.put("/admin/activity-settings")
+def admin_update_activity_settings(req: ActivitySettingsReq, admin: User = Depends(require_admin), db: Session = Depends(get_db)):
+    data = req.dict(exclude_none=True)
+    for k, v in data.items():
+        set_config(db, f"activity_{k}", str(v))
+    return {"message": "活動設定已保存"}
+
+# ── GET /admin/system-settings ──────────────────
+@app.get("/admin/system-settings")
+def admin_get_system_settings(admin: User = Depends(require_admin), db: Session = Depends(get_db)):
+    keys = ["maintenance","site_title","site_subtitle","cs_line","cs_telegram","cs_phone","system_announcement"]
+    result = {}
+    defaults = {"maintenance":"False","site_title":"城星娛樂城","site_subtitle":"頂級娛樂體驗"}
+    for k in keys:
+        val = get_config(db, f"system_{k}", defaults.get(k, ""))
+        if val in ("True","False"): result[k] = val == "True"
+        else: result[k] = val
+    return result
+
+# ── PUT /admin/system-settings ──────────────────
+@app.put("/admin/system-settings")
+def admin_update_system_settings(req: SystemSettingsReq, admin: User = Depends(require_admin), db: Session = Depends(get_db)):
+    data = req.dict(exclude_none=True)
+    for k, v in data.items():
+        set_config(db, f"system_{k}", str(v))
+    return {"message": "系統設定已保存"}
+
+# ── GET /admin/announcements-list ───────────────
+@app.get("/admin/announcements-list")
+def admin_list_announcements(admin: User = Depends(require_admin), db: Session = Depends(get_db)):
+    items = db.query(Announcement).order_by(Announcement.created_at.desc()).all()
+    return {"announcements": [{"id": a.id, "title": a.title, "content": a.content,
+                                "pinned": False, "expires": None,
+                                "created_at": a.created_at.isoformat()} for a in items]}
+
+# ── PUT /admin/announcements/{id} ───────────────
+@app.put("/admin/announcements/{aid}")
+def admin_update_ann(aid: int, req: AnnouncementUpdate, admin: User = Depends(require_admin), db: Session = Depends(get_db)):
+    a = db.query(Announcement).filter(Announcement.id==aid).first()
+    if not a: raise HTTPException(404, "公告不存在")
+    if req.title   is not None: a.title   = req.title
+    if req.content is not None: a.content = req.content
+    db.commit()
+    return {"id": a.id, "title": a.title, "content": a.content}
