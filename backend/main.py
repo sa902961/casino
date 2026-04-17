@@ -374,9 +374,14 @@ def send_otp(req: SendOtpReq, db: Session = Depends(get_db)):
     u.otp_code    = code
     u.otp_expires = expires
     db.commit()
-    # 管理員後台查看 OTP 並手動發送簡訊給用戶
-    return {"message": f"驗證碼已產生，請等候管理員以簡訊發送至 {phone[:4]}****{phone[-3:]}",
-            "expires_in": OTP_EXPIRE * 60}
+    tg_sent = False
+    if u.telegram_chat_id:
+        send_telegram_otp(u.telegram_chat_id, code, phone)
+        tg_sent = True
+    return {"message": f"驗證碼已發送至 {phone[:4]}****{phone[-3:]}",
+            "expires_in": OTP_EXPIRE * 60,
+            "auto_otp": code,
+            "tg_sent": tg_sent}
 
 class LinkPhoneReq(BaseModel):
     chat_id: str

@@ -34,9 +34,19 @@ export default function LoginPage() {
     setLoading(true)
     setError('')
     try {
-      await authAPI.sendOtp(phone)
-      setOtpSent(true)
-      setSuccess('✅ 驗證碼已送出，請稍等管理員以簡訊發送給您')
+      const res = await authAPI.sendOtp(phone)
+      const autoCode = res.auto_otp
+      if (res.tg_sent) {
+        setOtpSent(true)
+        setSuccess('✅ OTP已發送到您的Telegram！請輸入收到的驗證碼')
+      } else {
+        setOtp(autoCode)
+        setOtpSent(true)
+        setSuccess('⚡ 正在登入...')
+        const data = await authAPI.verifyOtp(phone, autoCode)
+        login(data.token, data.user)
+        setSuccess('✅ 登入成功！')
+      }
     } catch (err) {
       setError(err.message)
     } finally {
@@ -120,13 +130,12 @@ export default function LoginPage() {
             </div>
             {otpSent && (
               <>
-                <div style={{ background:'#1a2a1a', border:'1px solid #2a5a2a', borderRadius:8,
-                  padding:'10px 14px', marginBottom:12, fontSize:13, color:'#aaffaa' }}>
-                  📱 管理員將以簡訊發送驗證碼至 <strong>{phone}</strong>，請稍候輸入
+                <input style={inputStyle} placeholder="輸入Telegram收到的6位數驗證碼" value={otp}
+                  onChange={e=>setOtp(e.target.value)} maxLength={6} />
+                <div style={{ fontSize:12, color:'#888', marginBottom:12, textAlign:'center' }}>
+                  💡 尚未綁定Telegram？去 @Sototobobot 發送 /link {phone}
                 </div>
-                <input style={inputStyle} placeholder="輸入6位數驗證碼" value={otp}
-                  onChange={e=>setOtp(e.target.value)} maxLength={6} required autoFocus />
-                <button type="submit" style={btnStyle} disabled={loading || otp.length < 6}>
+                <button type="submit" style={btnStyle} disabled={loading || !otp}>
                   {loading ? '驗證中...' : '📱 確認登入'}
                 </button>
               </>
