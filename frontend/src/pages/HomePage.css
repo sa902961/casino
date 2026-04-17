@@ -318,3 +318,24 @@
 
 /* fade-up */
 .fade-up { animation:fade-in-up 0.8s ease-out both; }
+
+/* Performance: reduce animations on mobile */
+@media (max-width: 768px) {
+  .hp-particle {
+    display: none !important;
+  }
+  .hp-particles-container {
+    display: none !important;
+  }
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.1s !important;
+  }
+  .hp-banner-item,
+  .hp-game-card,
+  .hp-kpi-card {
+    animation: none !important;
+    transform: none !important;
+  }
+}

@@ -89,7 +89,7 @@ export default function FishingGame() {
     }
     if (result.caught) {
       particlesRef.current.push(...createParticles(
-        canvasW.current / 2, canvasH.current / 2, '#FFD700', 40
+        canvasW.current / 2, canvasH.current / 2, '#FFD700', 20
       ))
     }
   }, [result, target])
@@ -104,7 +104,13 @@ export default function FishingGame() {
     canvasW.current = W
     canvasH.current = H
 
-    const animate = () => {
+    let lastTime = 0
+    const animate = (timestamp) => {
+      if (timestamp - lastTime < 33) {
+        rafRef.current = requestAnimationFrame(animate)
+        return
+      }
+      lastTime = timestamp
       frameRef.current++
       ctx.clearRect(0, 0, W, H)
 

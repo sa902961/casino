@@ -147,7 +147,13 @@ export default function SlotGame() {
       ctx.fillText(sym, cx, cy)
     }
 
-    const animate = () => {
+    let lastTime = 0
+    const animate = (timestamp) => {
+      if (timestamp - lastTime < 33) {
+        rafRef.current = requestAnimationFrame(animate)
+        return
+      }
+      lastTime = timestamp
       frameRef.current++
       ctx.clearRect(0, 0, CANVAS_W, CANVAS_H)
 

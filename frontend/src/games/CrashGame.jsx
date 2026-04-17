@@ -45,7 +45,7 @@ export default function CrashGame() {
         const canvas = canvasRef.current
         if (canvas) {
           const W = canvas.width, H = canvas.height
-          for (let i = 0; i < 60; i++) {
+          for (let i = 0; i < 30; i++) {
             particlesRef.current.push(createParticle(W / 2, H / 2, '#FFD700'))
             particlesRef.current.push(createParticle(W / 2, H / 2, '#FFA500'))
           }
@@ -57,7 +57,7 @@ export default function CrashGame() {
         if (canvas) {
           const W = canvas.width, H = canvas.height
           const cx = W * 0.8, cy = H * 0.2
-          for (let i = 0; i < 50; i++) {
+          for (let i = 0; i < 25; i++) {
             particlesRef.current.push(createParticle(cx, cy, '#FF3B5C'))
             particlesRef.current.push(createParticle(cx, cy, '#FF8800'))
           }
@@ -84,7 +84,13 @@ export default function CrashGame() {
     const ctx = canvas.getContext('2d')
     const W = canvas.width, H = canvas.height
 
+    let lastTime = 0
     const animate = (ts) => {
+      if (ts - lastTime < 33) {
+        rafRef.current = requestAnimationFrame(animate)
+        return
+      }
+      lastTime = ts
       frameRef.current++
       ctx.clearRect(0, 0, W, H)
 
