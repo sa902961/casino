@@ -1,1302 +1,1140 @@
-import { useState, useEffect, useRef } from 'react'
-import { adminAPI } from '../utils/api'
-import { useAuth } from '../hooks/useAuth'
+import { useState } from 'react';
 
-// ── 樣式常量 ─────────────────────────────────
-const BG = '#0a0e1a'
-const BG2 = '#111827'
-const BG3 = '#1a2035'
-const GOLD = '#FFD700'
-const GOLD2 = '#FFA500'
-const GREEN = '#22c55e'
-const RED = '#ef4444'
-const BLUE = '#3b82f6'
-const PURPLE = '#a855f7'
+// ─── Color Palette ───────────────────────────────────────────────────────────
+const C = {
+  sidebar:   '#0f1117',
+  bg:        '#1a1d2e',
+  card:      '#242736',
+  cardHover: '#2d3048',
+  border:    '#2e3250',
+  primary:   '#6366f1',
+  primaryHover: '#4f52d4',
+  success:   '#10b981',
+  warning:   '#f59e0b',
+  danger:    '#ef4444',
+  text:      '#e2e8f0',
+  textMuted: '#8892a4',
+  textDim:   '#4a5568',
+  white:     '#ffffff',
+};
 
-const card = {
-  background: BG3,
-  borderRadius: 12,
-  padding: '16px 20px',
-  border: `1px solid #2a3550`,
-  marginBottom: 12,
-}
+// ─── Shared Style Helpers ────────────────────────────────────────────────────
+const s = {
+  card: {
+    background: C.card, borderRadius: 12, padding: '20px 24px',
+    border: `1px solid ${C.border}`,
+  },
+  badge: (color) => ({
+    display: 'inline-block', padding: '2px 10px', borderRadius: 20,
+    fontSize: 11, fontWeight: 600, background: color + '22', color,
+  }),
+  btn: (color = C.primary, outline = false) => ({
+    padding: '7px 16px', borderRadius: 8, border: outline ? `1px solid ${color}` : 'none',
+    background: outline ? 'transparent' : color, color: outline ? color : C.white,
+    cursor: 'pointer', fontSize: 13, fontWeight: 600,
+    transition: 'opacity .15s',
+  }),
+  btnSm: (color = C.primary) => ({
+    padding: '4px 12px', borderRadius: 6, border: 'none',
+    background: color, color: C.white, cursor: 'pointer', fontSize: 12, fontWeight: 600,
+  }),
+  input: {
+    background: '#1e2235', border: `1px solid ${C.border}`, borderRadius: 8,
+    color: C.text, padding: '8px 12px', fontSize: 13, outline: 'none',
+  },
+  th: {
+    padding: '10px 16px', color: C.textMuted, fontSize: 12, fontWeight: 600,
+    textAlign: 'left', borderBottom: `1px solid ${C.border}`, textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+  },
+  td: {
+    padding: '12px 16px', color: C.text, fontSize: 13,
+    borderBottom: `1px solid ${C.border}22`,
+  },
+};
 
-const btn = (color = GOLD) => ({
-  padding: '8px 16px',
-  background: color,
-  color: color === GOLD ? '#000' : '#fff',
-  border: 'none',
-  borderRadius: 8,
-  cursor: 'pointer',
-  fontWeight: 'bold',
-  fontSize: 13,
-})
+// ─── Mock Data ────────────────────────────────────────────────────────────────
+const mockUsers = [
+  { id: 1, name: '王小明', email: 'ming@example.com', points: 15200, status: '正常', joined: '2025-01-15', lastLogin: '2026-04-16' },
+  { id: 2, name: '李美玲', email: 'ling@example.com', points: 8300,  status: '正常', joined: '2025-03-02', lastLogin: '2026-04-17' },
+  { id: 3, name: '陳大偉', email: 'wei@example.com',  points: 2100,  status: '封鎖', joined: '2025-05-18', lastLogin: '2026-03-30' },
+  { id: 4, name: '林志豪', email: 'hao@example.com',  points: 45000, status: '正常', joined: '2025-02-11', lastLogin: '2026-04-17' },
+  { id: 5, name: '黃雅婷', email: 'ting@example.com', points: 3700,  status: '正常', joined: '2025-07-22', lastLogin: '2026-04-15' },
+];
 
-const inputStyle = {
-  width: '100%',
-  padding: '10px 14px',
-  background: '#0f1729',
-  border: `1px solid #2a3550`,
-  borderRadius: 8,
-  color: '#fff',
-  fontSize: 14,
-  outline: 'none',
-  boxSizing: 'border-box',
-}
+const mockDeposits = [
+  { id: 'D0041', user: '王小明', amount: 5000,  method: 'LINE Pay', time: '10:23', status: '待審核' },
+  { id: 'D0042', user: '李美玲', amount: 2000,  method: '街口支付', time: '10:45', status: '待審核' },
+  { id: 'D0043', user: '林志豪', amount: 10000, method: '銀行轉帳', time: '11:02', status: '待審核' },
+  { id: 'D0038', user: '黃雅婷', amount: 1000,  method: 'LINE Pay', time: '09:15', status: '已核准' },
+  { id: 'D0037', user: '陳大偉', amount: 3000,  method: '街口支付', time: '08:50', status: '已拒絕' },
+];
 
-const badge = (color) => ({
-  display: 'inline-block',
-  padding: '2px 8px',
-  borderRadius: 4,
-  fontSize: 11,
-  fontWeight: 'bold',
-  background: color + '22',
-  color: color,
-  border: `1px solid ${color}44`,
-})
+const mockWithdraws = [
+  { id: 'W0021', user: '林志豪', amount: 8000,  bank: '台灣銀行', account: '****1234', time: '09:30', status: '待審核' },
+  { id: 'W0022', user: '王小明', amount: 3500,  bank: '中信銀行', account: '****5678', time: '10:10', status: '待審核' },
+  { id: 'W0020', user: '李美玲', amount: 1200,  bank: '玉山銀行', account: '****9012', time: '08:20', status: '已核准' },
+];
 
-// ── Toast 提示 ───────────────────────────────
-function Toast({ msg, type }) {
-  if (!msg) return null
-  const color = type === 'error' ? RED : GREEN
-  return (
-    <div style={{
-      position: 'fixed', top: 80, right: 20, zIndex: 9999,
-      background: BG3, border: `1px solid ${color}`,
-      color, padding: '12px 20px', borderRadius: 10,
-      fontSize: 14, fontWeight: 'bold', maxWidth: 300,
-      boxShadow: `0 0 20px ${color}44`
-    }}>
-      {type === 'error' ? '❌ ' : '✅ '}{msg}
-    </div>
-  )
-}
+const mockAnnouncements = [
+  { id: 1, title: '系統維護通知', content: '本系統將於 4/20 凌晨 2:00-4:00 進行例行維護', priority: '高', status: '發布', date: '2026-04-17' },
+  { id: 2, title: '新春活動上線', content: '新春期間存款享雙倍紅利，活動至 2/15 截止', priority: '中', status: '發布', date: '2026-04-10' },
+  { id: 3, title: '新遊戲上線公告', content: '全新電子遊戲《財神到》正式上線！', priority: '低', status: '草稿', date: '2026-04-05' },
+];
 
-// ── 確認對話框 ───────────────────────────────
-function Confirm({ msg, onYes, onNo }) {
-  if (!msg) return null
-  return (
-    <div style={{
-      position: 'fixed', inset: 0, background: '#000a',
-      display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9998
-    }}>
-      <div style={{ background: BG3, borderRadius: 14, padding: 28, maxWidth: 360, width: '90%', border: `1px solid ${GOLD}44` }}>
-        <div style={{ color: '#fff', fontSize: 16, marginBottom: 20, textAlign: 'center' }}>{msg}</div>
-        <div style={{ display: 'flex', gap: 12 }}>
-          <button onClick={onYes} style={{ ...btn(GREEN), flex: 1 }}>確認</button>
-          <button onClick={onNo} style={{ ...btn('#666'), flex: 1 }}>取消</button>
-        </div>
-      </div>
-    </div>
-  )
-}
+const mockOTP = [
+  { user: '王小明', ip: '192.168.1.101', time: '2026-04-17 10:23', status: '成功' },
+  { user: '林志豪', ip: '58.243.12.88',  time: '2026-04-17 09:55', status: '成功' },
+  { user: 'Unknown', ip: '103.45.67.89', time: '2026-04-17 09:12', status: '失敗' },
+  { user: 'Unknown', ip: '103.45.67.89', time: '2026-04-17 09:11', status: '失敗' },
+  { user: 'Unknown', ip: '103.45.67.89', time: '2026-04-17 09:10', status: '失敗' },
+];
 
-// ════════════════════════════════════════════
-// Tab 1: 📊 數據總覽
-// ════════════════════════════════════════════
-function DashboardTab({ showMsg }) {
-  const [data, setData] = useState(null)
-  const [online, setOnline] = useState(Math.floor(Math.random() * 80) + 20)
-  const timerRef = useRef()
-
-  const load = () => {
-    adminAPI.dashboard().then(setData).catch(e => showMsg(e.message, 'error'))
-  }
-
-  useEffect(() => {
-    load()
-    // 每5秒刷新在線人數
-    timerRef.current = setInterval(() => {
-      setOnline(n => n + Math.floor(Math.random() * 7) - 3)
-      load()
-    }, 5000)
-    return () => clearInterval(timerRef.current)
-  }, [])
-
-  if (!data) return <div style={{ textAlign: 'center', color: '#666', padding: 60 }}>載入中...</div>
-
-  const stats = [
-    { label: '今日營收', value: `$${(data.today_revenue || 0).toLocaleString()}`, icon: '💰', color: GOLD },
-    { label: '總營收', value: `$${(data.total_revenue || 0).toLocaleString()}`, icon: '📈', color: GREEN },
-    { label: '總用戶數', value: (data.total_users || 0).toLocaleString(), icon: '👥', color: BLUE },
-    { label: '今日新增', value: (data.new_users_today || 0).toLocaleString(), icon: '🆕', color: PURPLE },
-    { label: '待審儲值', value: data.pending_recharge || 0, icon: '⏳', color: GOLD2 },
-    { label: '待審提款', value: data.pending_withdraw || 0, icon: '💸', color: RED },
-  ]
-
-  const topGames = data.top_games || []
-  const chartData = data.revenue_7days || Array.from({ length: 7 }, (_, i) => ({ day: `${i + 1}日`, amount: Math.random() * 10000 }))
-  const maxVal = Math.max(...chartData.map(d => d.amount), 1)
-
+// ─── Mini Chart (SVG bar chart) ───────────────────────────────────────────────
+function BarChart({ data, color = C.primary, label }) {
+  const max = Math.max(...data.map(d => d.value));
   return (
     <div>
-      {/* 即時在線 */}
-      <div style={{ ...card, background: `linear-gradient(135deg, #0a1628, #1a2535)`, border: `1px solid ${GOLD}44`, marginBottom: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 12, height: 12, borderRadius: '50%', background: GREEN, boxShadow: `0 0 8px ${GREEN}` }} />
-          <span style={{ color: '#aaa', fontSize: 14 }}>即時在線人數</span>
-          <span style={{ color: GOLD, fontSize: 28, fontWeight: 'bold', marginLeft: 'auto' }}>{online} 人</span>
+      {label && <div style={{ color: C.textMuted, fontSize: 12, marginBottom: 8 }}>{label}</div>}
+      <svg width="100%" height="80" viewBox={`0 0 ${data.length * 36} 80`} preserveAspectRatio="none">
+        {data.map((d, i) => {
+          const h = (d.value / max) * 64;
+          return (
+            <g key={i}>
+              <rect x={i * 36 + 4} y={80 - h - 8} width={28} height={h}
+                fill={color} opacity={0.8} rx={4} />
+              <text x={i * 36 + 18} y={78} textAnchor="middle"
+                fill={C.textMuted} fontSize={9}>{d.label}</text>
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
+function LineChart({ data, color = C.primary }) {
+  const max = Math.max(...data.map(d => d.value));
+  const W = 400, H = 80, pad = 8;
+  const pts = data.map((d, i) => {
+    const x = pad + (i / (data.length - 1)) * (W - pad * 2);
+    const y = H - pad - ((d.value / max) * (H - pad * 2));
+    return `${x},${y}`;
+  }).join(' ');
+  return (
+    <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="lg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.3" />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <polyline points={pts} fill="none" stroke={color} strokeWidth={2} strokeLinejoin="round" />
+      {data.map((d, i) => {
+        const x = pad + (i / (data.length - 1)) * (W - pad * 2);
+        const y = H - pad - ((d.value / max) * (H - pad * 2));
+        return <circle key={i} cx={x} cy={y} r={3} fill={color} />;
+      })}
+    </svg>
+  );
+}
+
+// ─── KPI Card ─────────────────────────────────────────────────────────────────
+function KPICard({ icon, title, value, sub, color, trend }) {
+  return (
+    <div style={{ ...s.card, display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+      <div style={{
+        width: 48, height: 48, borderRadius: 12,
+        background: color + '22', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: 22, flexShrink: 0,
+      }}>{icon}</div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ color: C.textMuted, fontSize: 12, fontWeight: 500, marginBottom: 4 }}>{title}</div>
+        <div style={{ color: C.white, fontSize: 24, fontWeight: 700, lineHeight: 1 }}>{value}</div>
+        {sub && (
+          <div style={{ color: trend === '+' ? C.success : trend === '-' ? C.danger : C.textMuted, fontSize: 11, marginTop: 4 }}>
+            {trend === '+' ? '▲' : trend === '-' ? '▼' : ''} {sub}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Toggle Switch ────────────────────────────────────────────────────────────
+function Toggle({ value, onChange }) {
+  return (
+    <div onClick={() => onChange(!value)} style={{
+      width: 44, height: 24, borderRadius: 12,
+      background: value ? C.primary : C.border,
+      cursor: 'pointer', position: 'relative', transition: 'background .2s',
+    }}>
+      <div style={{
+        position: 'absolute', top: 3,
+        left: value ? 23 : 3,
+        width: 18, height: 18, borderRadius: '50%',
+        background: C.white, transition: 'left .2s',
+        boxShadow: '0 1px 4px #0006',
+      }} />
+    </div>
+  );
+}
+
+// ─── Slider ───────────────────────────────────────────────────────────────────
+function Slider({ value, onChange, min = 0, max = 100, label }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      {label && <span style={{ color: C.textMuted, fontSize: 12, width: 80 }}>{label}</span>}
+      <input
+        type="range" min={min} max={max} value={value}
+        onChange={e => onChange(Number(e.target.value))}
+        style={{ flex: 1, accentColor: C.primary }}
+      />
+      <span style={{ color: C.primary, fontWeight: 700, width: 40, textAlign: 'right', fontSize: 13 }}>
+        {value}%
+      </span>
+    </div>
+  );
+}
+
+// ─── Section Title ────────────────────────────────────────────────────────────
+function SectionTitle({ children, action }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+      <h2 style={{ color: C.white, fontSize: 18, fontWeight: 700, margin: 0 }}>{children}</h2>
+      {action}
+    </div>
+  );
+}
+
+// ─── Table Wrapper ────────────────────────────────────────────────────────────
+function Table({ headers, rows }) {
+  return (
+    <div style={{ overflowX: 'auto' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <thead>
+          <tr>{headers.map((h, i) => <th key={i} style={s.th}>{h}</th>)}</tr>
+        </thead>
+        <tbody>{rows}</tbody>
+      </table>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ─── PAGE COMPONENTS ─────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function DashboardPage() {
+  const revenueData = [
+    { label: 'Mo', value: 42000 }, { label: 'Tu', value: 38000 }, { label: 'We', value: 55000 },
+    { label: 'Th', value: 61000 }, { label: 'Fr', value: 78000 }, { label: 'Sa', value: 95000 },
+    { label: 'Su', value: 88000 },
+  ];
+  const userGrowth = [
+    { label: '1', value: 120 }, { label: '5', value: 145 }, { label: '10', value: 160 },
+    { label: '15', value: 155 }, { label: '20', value: 190 }, { label: '25', value: 220 },
+    { label: '30', value: 245 },
+  ];
+  const pending = [
+    { type: '儲值審核', count: 3, color: C.warning },
+    { type: '提款審核', count: 2, color: C.danger },
+    { type: '用戶申訴', count: 1, color: C.primary },
+  ];
+  return (
+    <div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 16, marginBottom: 24 }}>
+        <KPICard icon="💰" title="今日營收" value="NT$124,800" sub="+18.4% vs 昨日" color={C.success} trend="+" />
+        <KPICard icon="👥" title="活躍用戶" value="1,284" sub="+52 今日新增" color={C.primary} trend="+" />
+        <KPICard icon="🎰" title="遊戲局數" value="8,471" sub="-3.2% vs 昨日" color={C.warning} trend="-" />
+        <KPICard icon="💳" title="待處理交易" value="5" sub="需要立即處理" color={C.danger} trend="" />
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
+        <div style={s.card}>
+          <div style={{ color: C.text, fontWeight: 600, marginBottom: 12, fontSize: 14 }}>📊 本週營收趨勢</div>
+          <BarChart data={revenueData} color={C.primary} />
+          <div style={{ marginTop: 8, color: C.textMuted, fontSize: 11 }}>單位：新台幣</div>
+        </div>
+        <div style={s.card}>
+          <div style={{ color: C.text, fontWeight: 600, marginBottom: 12, fontSize: 14 }}>📈 本月用戶成長</div>
+          <LineChart data={userGrowth} color={C.success} />
+          <div style={{ marginTop: 8, color: C.textMuted, fontSize: 11 }}>單位：人數</div>
         </div>
       </div>
 
-      {/* 統計卡片 */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, marginBottom: 20 }}>
-        {stats.map((s, i) => (
-          <div key={i} style={{ ...card, marginBottom: 0, padding: '14px 16px' }}>
-            <div style={{ fontSize: 24 }}>{s.icon}</div>
-            <div style={{ color: '#888', fontSize: 12, marginTop: 4 }}>{s.label}</div>
-            <div style={{ color: s.color, fontSize: 20, fontWeight: 'bold', marginTop: 2 }}>{s.value}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* 遊戲排行榜 */}
-      <div style={card}>
-        <div style={{ color: GOLD, fontWeight: 'bold', marginBottom: 14, fontSize: 15 }}>🏆 熱門遊戲 TOP 5</div>
-        {topGames.length === 0 && <div style={{ color: '#666', fontSize: 13 }}>暫無數據</div>}
-        {topGames.slice(0, 5).map((g, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-            <div style={{
-              width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: i < 3 ? [GOLD, '#C0C0C0', '#CD7F32'][i] : '#333',
-              color: i < 3 ? '#000' : '#fff', fontWeight: 'bold', fontSize: 13, flexShrink: 0
-            }}>{i + 1}</div>
-            <div style={{ flex: 1 }}>
-              <div style={{ color: '#ddd', fontSize: 13 }}>{g.game_type}</div>
-              <div style={{ height: 6, background: '#1e2d45', borderRadius: 3, marginTop: 4 }}>
-                <div style={{
-                  height: '100%', borderRadius: 3,
-                  width: `${(g.count / (topGames[0]?.count || 1)) * 100}%`,
-                  background: `linear-gradient(90deg, ${GOLD}, ${GOLD2})`
-                }} />
-              </div>
-            </div>
-            <div style={{ color: GOLD, fontSize: 13, fontWeight: 'bold' }}>{g.count}局</div>
-          </div>
-        ))}
-      </div>
-
-      {/* 近7天營收折線圖 */}
-      <div style={card}>
-        <div style={{ color: GOLD, fontWeight: 'bold', marginBottom: 14, fontSize: 15 }}>📈 近7天營收</div>
-        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 100 }}>
-          {chartData.map((d, i) => (
-            <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-              <div style={{ color: GOLD, fontSize: 10 }}>${Math.round(d.amount / 100) * 100}</div>
-              <div style={{
-                width: '100%', borderRadius: '4px 4px 0 0',
-                height: `${Math.max((d.amount / maxVal) * 80, 4)}px`,
-                background: `linear-gradient(180deg, ${GOLD}, ${GOLD2})`,
-                transition: 'height 0.3s'
-              }} />
-              <div style={{ color: '#666', fontSize: 10, whiteSpace: 'nowrap' }}>{d.day}</div>
+      <div style={s.card}>
+        <SectionTitle>⚠️ 待處理項目</SectionTitle>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          {pending.map((p, i) => (
+            <div key={i} style={{
+              background: p.color + '15', border: `1px solid ${p.color}44`,
+              borderRadius: 10, padding: '14px 20px', display: 'flex', alignItems: 'center', gap: 12,
+            }}>
+              <div style={{ fontSize: 28, fontWeight: 700, color: p.color }}>{p.count}</div>
+              <div style={{ color: C.text, fontSize: 13 }}>{p.type}</div>
+              <button style={s.btnSm(p.color)}>前往處理</button>
             </div>
           ))}
         </div>
       </div>
     </div>
-  )
+  );
 }
 
-// ════════════════════════════════════════════
-// Tab 2: 👥 用戶管理
-// ════════════════════════════════════════════
-function UsersTab({ showMsg }) {
-  const [users, setUsers] = useState([])
-  const [search, setSearch] = useState('')
-  const [filter, setFilter] = useState('all')
-  const [selected, setSelected] = useState(null)
-  const [adjAmt, setAdjAmt] = useState('')
-  const [vipVal, setVipVal] = useState('')
-  const [confirm, setConfirm] = useState(null)
+// ─────────────────────────────────────────────────────────────────────────────
 
-  useEffect(() => {
-    adminAPI.users().then(d => setUsers(d.users || [])).catch(e => showMsg(e.message, 'error'))
-  }, [])
+function UsersPage() {
+  const [users, setUsers] = useState(mockUsers);
+  const [search, setSearch] = useState('');
+  const [editUser, setEditUser] = useState(null);
+  const [adjustPts, setAdjustPts] = useState('');
 
-  const filtered = users.filter(u => {
-    const q = search.toLowerCase()
-    const matchSearch = !q || u.username?.toLowerCase().includes(q) || u.phone?.includes(q)
-    const matchFilter = filter === 'all' || (filter === 'blocked' && u.is_blocked) || (filter === 'active' && !u.is_blocked)
-    return matchSearch && matchFilter
-  })
+  const filtered = users.filter(u =>
+    u.name.includes(search) || u.email.includes(search)
+  );
 
-  const handleBlock = (u) => {
-    setConfirm({
-      msg: `確認${u.is_blocked ? '解鎖' : '封鎖'}用戶 ${u.username}？`,
-      action: async () => {
-        try {
-          await adminAPI.blockUser(u.id, !u.is_blocked)
-          setUsers(list => list.map(x => x.id === u.id ? { ...x, is_blocked: !x.is_blocked } : x))
-          showMsg(`已${u.is_blocked ? '解鎖' : '封鎖'} ${u.username}`)
-          setSelected(null)
-        } catch (e) { showMsg(e.message, 'error') }
-      }
-    })
-  }
+  const toggleBlock = (id) => {
+    setUsers(us => us.map(u => u.id === id
+      ? { ...u, status: u.status === '封鎖' ? '正常' : '封鎖' }
+      : u
+    ));
+  };
 
-  const handleBalance = async (u) => {
-    const amt = parseFloat(adjAmt)
-    if (isNaN(amt)) return showMsg('請輸入有效金額', 'error')
-    try {
-      await adminAPI.updateBalance(u.id, amt)
-      setUsers(list => list.map(x => x.id === u.id ? { ...x, balance: x.balance + amt } : x))
-      showMsg(`已調整 ${u.username} 餘額 ${amt > 0 ? '+' : ''}${amt}`)
-      setAdjAmt('')
-    } catch (e) { showMsg(e.message, 'error') }
-  }
-
-  const handleVip = async (u) => {
-    const v = parseInt(vipVal)
-    if (isNaN(v) || v < 0 || v > 10) return showMsg('VIP等級須為0-10', 'error')
-    try {
-      await adminAPI.updateVip(u.id, v)
-      setUsers(list => list.map(x => x.id === u.id ? { ...x, vip_level: v } : x))
-      showMsg(`已更新 ${u.username} VIP等級為 ${v}`)
-      setVipVal('')
-    } catch (e) { showMsg(e.message, 'error') }
-  }
+  const applyPoints = (id) => {
+    const delta = parseInt(adjustPts, 10);
+    if (!isNaN(delta)) {
+      setUsers(us => us.map(u => u.id === id ? { ...u, points: u.points + delta } : u));
+    }
+    setEditUser(null);
+    setAdjustPts('');
+  };
 
   return (
     <div>
-      <Confirm msg={confirm?.msg} onYes={() => { confirm?.action(); setConfirm(null) }} onNo={() => setConfirm(null)} />
+      <SectionTitle action={
+        <div style={{ display: 'flex', gap: 8 }}>
+          <input
+            placeholder="🔍 搜尋用戶名稱 / Email"
+            value={search} onChange={e => setSearch(e.target.value)}
+            style={{ ...s.input, width: 220 }}
+          />
+          <button style={s.btn()}>匯出 CSV</button>
+        </div>
+      }>👥 用戶管理</SectionTitle>
 
-      {/* 搜尋/篩選 */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-        <input value={search} onChange={e => setSearch(e.target.value)}
-          placeholder="搜尋帳號/手機" style={{ ...inputStyle, flex: 1 }} />
-        <select value={filter} onChange={e => setFilter(e.target.value)}
-          style={{ ...inputStyle, width: 'auto', flex: '0 0 90px' }}>
-          <option value="all">全部</option>
-          <option value="active">正常</option>
-          <option value="blocked">封鎖</option>
-        </select>
+      <div style={s.card}>
+        <Table
+          headers={['#', '姓名', 'Email', '點數', '狀態', '加入日期', '上次登入', '操作']}
+          rows={filtered.map(u => (
+            <tr key={u.id} style={{ transition: 'background .1s' }}
+              onMouseEnter={e => e.currentTarget.style.background = C.cardHover + '44'}
+              onMouseLeave={e => e.currentTarget.style.background = ''}>
+              <td style={s.td}>{u.id}</td>
+              <td style={s.td}><span style={{ fontWeight: 600 }}>{u.name}</span></td>
+              <td style={{ ...s.td, color: C.textMuted }}>{u.email}</td>
+              <td style={{ ...s.td, color: C.primary, fontWeight: 700 }}>{u.points.toLocaleString()}</td>
+              <td style={s.td}>
+                <span style={s.badge(u.status === '正常' ? C.success : C.danger)}>{u.status}</span>
+              </td>
+              <td style={{ ...s.td, color: C.textMuted }}>{u.joined}</td>
+              <td style={{ ...s.td, color: C.textMuted }}>{u.lastLogin}</td>
+              <td style={s.td}>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  {editUser === u.id ? (
+                    <>
+                      <input
+                        placeholder="±點數"
+                        value={adjustPts}
+                        onChange={e => setAdjustPts(e.target.value)}
+                        style={{ ...s.input, width: 80, padding: '4px 8px' }}
+                      />
+                      <button onClick={() => applyPoints(u.id)} style={s.btnSm(C.success)}>確認</button>
+                      <button onClick={() => setEditUser(null)} style={s.btnSm(C.textDim)}>取消</button>
+                    </>
+                  ) : (
+                    <>
+                      <button onClick={() => setEditUser(u.id)} style={s.btnSm(C.primary)}>調整點數</button>
+                      <button onClick={() => toggleBlock(u.id)}
+                        style={s.btnSm(u.status === '封鎖' ? C.success : C.danger)}>
+                        {u.status === '封鎖' ? '解封' : '封鎖'}
+                      </button>
+                    </>
+                  )}
+                </div>
+              </td>
+            </tr>
+          ))}
+        />
       </div>
-      <div style={{ color: '#666', fontSize: 12, marginBottom: 10 }}>共 {filtered.length} 位用戶</div>
+    </div>
+  );
+}
 
-      {/* 用戶詳情 Modal */}
-      {selected && (
-        <div style={{
-          position: 'fixed', inset: 0, background: '#000c', zIndex: 9000,
-          display: 'flex', alignItems: 'flex-end', justifyContent: 'center'
-        }} onClick={() => setSelected(null)}>
-          <div style={{
-            background: BG3, borderRadius: '16px 16px 0 0', padding: 24,
-            width: '100%', maxWidth: 600, maxHeight: '80vh', overflowY: 'auto',
-            border: `1px solid ${GOLD}44`
-          }} onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
-              <div style={{ color: GOLD, fontWeight: 'bold', fontSize: 18 }}>
-                👤 {selected.username}
-              </div>
-              <button onClick={() => setSelected(null)} style={{ background: 'none', border: 'none', color: '#666', fontSize: 20, cursor: 'pointer' }}>✕</button>
+// ─────────────────────────────────────────────────────────────────────────────
+
+function DepositPage() {
+  const [items, setItems] = useState(mockDeposits);
+  const handle = (id, action) => {
+    setItems(it => it.map(i => i.id === id
+      ? { ...i, status: action === 'approve' ? '已核准' : '已拒絕' }
+      : i
+    ));
+  };
+  return (
+    <div>
+      <SectionTitle>💰 儲值審核</SectionTitle>
+      <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+        {['待審核', '已核准', '已拒絕'].map(st => {
+          const c = st === '待審核' ? C.warning : st === '已核准' ? C.success : C.danger;
+          const cnt = items.filter(i => i.status === st).length;
+          return (
+            <div key={st} style={{ ...s.card, flex: 1, textAlign: 'center', padding: '14px' }}>
+              <div style={{ fontSize: 22, fontWeight: 700, color: c }}>{cnt}</div>
+              <div style={{ color: C.textMuted, fontSize: 12, marginTop: 4 }}>{st}</div>
             </div>
+          );
+        })}
+      </div>
+      <div style={s.card}>
+        <Table
+          headers={['單號', '用戶', '金額', '付款方式', '時間', '狀態', '操作']}
+          rows={items.map(item => (
+            <tr key={item.id}>
+              <td style={{ ...s.td, fontFamily: 'monospace', color: C.primary }}>{item.id}</td>
+              <td style={s.td}>{item.user}</td>
+              <td style={{ ...s.td, fontWeight: 700, color: C.success }}>NT${item.amount.toLocaleString()}</td>
+              <td style={s.td}>{item.method}</td>
+              <td style={{ ...s.td, color: C.textMuted }}>{item.time}</td>
+              <td style={s.td}>
+                <span style={s.badge(
+                  item.status === '待審核' ? C.warning :
+                  item.status === '已核准' ? C.success : C.danger
+                )}>{item.status}</span>
+              </td>
+              <td style={s.td}>
+                {item.status === '待審核' ? (
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button onClick={() => handle(item.id, 'approve')} style={s.btnSm(C.success)}>✓ 核准</button>
+                    <button onClick={() => handle(item.id, 'reject')} style={s.btnSm(C.danger)}>✕ 拒絕</button>
+                  </div>
+                ) : <span style={{ color: C.textDim }}>—</span>}
+              </td>
+            </tr>
+          ))}
+        />
+      </div>
+    </div>
+  );
+}
 
-            {/* 基本資訊 */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
+// ─────────────────────────────────────────────────────────────────────────────
+
+function WithdrawPage() {
+  const [items, setItems] = useState(mockWithdraws);
+  const handle = (id, action) => {
+    setItems(it => it.map(i => i.id === id
+      ? { ...i, status: action === 'approve' ? '已核准' : '已拒絕' }
+      : i
+    ));
+  };
+  return (
+    <div>
+      <SectionTitle>💸 提款審核</SectionTitle>
+      <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+        {['待審核', '已核准', '已拒絕'].map(st => {
+          const c = st === '待審核' ? C.warning : st === '已核准' ? C.success : C.danger;
+          const cnt = items.filter(i => i.status === st).length;
+          return (
+            <div key={st} style={{ ...s.card, flex: 1, textAlign: 'center', padding: '14px' }}>
+              <div style={{ fontSize: 22, fontWeight: 700, color: c }}>{cnt}</div>
+              <div style={{ color: C.textMuted, fontSize: 12, marginTop: 4 }}>{st}</div>
+            </div>
+          );
+        })}
+      </div>
+      <div style={s.card}>
+        <Table
+          headers={['單號', '用戶', '金額', '銀行', '帳號', '時間', '狀態', '操作']}
+          rows={items.map(item => (
+            <tr key={item.id}>
+              <td style={{ ...s.td, fontFamily: 'monospace', color: C.primary }}>{item.id}</td>
+              <td style={s.td}>{item.user}</td>
+              <td style={{ ...s.td, fontWeight: 700, color: C.danger }}>NT${item.amount.toLocaleString()}</td>
+              <td style={s.td}>{item.bank}</td>
+              <td style={{ ...s.td, fontFamily: 'monospace', color: C.textMuted }}>{item.account}</td>
+              <td style={{ ...s.td, color: C.textMuted }}>{item.time}</td>
+              <td style={s.td}>
+                <span style={s.badge(
+                  item.status === '待審核' ? C.warning :
+                  item.status === '已核准' ? C.success : C.danger
+                )}>{item.status}</span>
+              </td>
+              <td style={s.td}>
+                {item.status === '待審核' ? (
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button onClick={() => handle(item.id, 'approve')} style={s.btnSm(C.success)}>✓ 核准</button>
+                    <button onClick={() => handle(item.id, 'reject')} style={s.btnSm(C.danger)}>✕ 拒絕</button>
+                  </div>
+                ) : <span style={{ color: C.textDim }}>—</span>}
+              </td>
+            </tr>
+          ))}
+        />
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+function GamesPage() {
+  const initGames = [
+    { id: 'slots1', name: '🎰 財神臨門', rtp: 96, enabled: true, minBet: 10, maxBet: 5000 },
+    { id: 'slots2', name: '🐉 龍鳳呈祥', rtp: 94, enabled: true, minBet: 5, maxBet: 3000 },
+    { id: 'slots3', name: '🍀 幸運三葉草', rtp: 97, enabled: false, minBet: 1, maxBet: 1000 },
+    { id: 'fish1',  name: '🐟 大海撈金', rtp: 92, enabled: true, minBet: 20, maxBet: 10000 },
+    { id: 'card1',  name: '🃏 百家樂', rtp: 98, enabled: true, minBet: 100, maxBet: 50000 },
+    { id: 'card2',  name: '🎴 龍虎鬥', rtp: 96, enabled: true, minBet: 50, maxBet: 20000 },
+  ];
+  const [games, setGames] = useState(initGames);
+
+  const update = (id, field, val) =>
+    setGames(gs => gs.map(g => g.id === id ? { ...g, [field]: val } : g));
+
+  return (
+    <div>
+      <SectionTitle>🎰 遊戲設定</SectionTitle>
+      <div style={{ display: 'grid', gap: 12 }}>
+        {games.map(g => (
+          <div key={g.id} style={{
+            ...s.card, display: 'flex', alignItems: 'center', gap: 20,
+            opacity: g.enabled ? 1 : 0.6,
+          }}>
+            <div style={{ width: 180, color: C.white, fontWeight: 600, fontSize: 14 }}>{g.name}</div>
+            <div style={{ flex: 1 }}>
+              <Slider value={g.rtp} onChange={v => update(g.id, 'rtp', v)}
+                min={85} max={99} label="RTP 回報率" />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: 200 }}>
+              <span style={{ color: C.textMuted, fontSize: 12 }}>最低:</span>
+              <input value={g.minBet} onChange={e => update(g.id, 'minBet', e.target.value)}
+                style={{ ...s.input, width: 70, padding: '5px 8px' }} />
+              <span style={{ color: C.textMuted, fontSize: 12 }}>最高:</span>
+              <input value={g.maxBet} onChange={e => update(g.id, 'maxBet', e.target.value)}
+                style={{ ...s.input, width: 80, padding: '5px 8px' }} />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+              <span style={{ color: C.textMuted, fontSize: 12 }}>{g.enabled ? '上線中' : '已下架'}</span>
+              <Toggle value={g.enabled} onChange={v => update(g.id, 'enabled', v)} />
+            </div>
+          </div>
+        ))}
+      </div>
+      <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end' }}>
+        <button style={s.btn()}>💾 儲存設定</button>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+function AnnouncementsPage() {
+  const [items, setItems] = useState(mockAnnouncements);
+  const [editing, setEditing] = useState(null);
+  const [form, setForm] = useState({ title: '', content: '', priority: '中' });
+  const [showForm, setShowForm] = useState(false);
+
+  const save = () => {
+    if (editing !== null) {
+      setItems(it => it.map(i => i.id === editing ? { ...i, ...form } : i));
+      setEditing(null);
+    } else {
+      setItems(it => [...it, {
+        id: Date.now(), ...form, status: '草稿', date: new Date().toISOString().slice(0, 10)
+      }]);
+    }
+    setForm({ title: '', content: '', priority: '中' });
+    setShowForm(false);
+  };
+
+  const del = (id) => setItems(it => it.filter(i => i.id !== id));
+
+  const startEdit = (item) => {
+    setForm({ title: item.title, content: item.content, priority: item.priority });
+    setEditing(item.id);
+    setShowForm(true);
+  };
+
+  const priorityColor = p => p === '高' ? C.danger : p === '中' ? C.warning : C.textMuted;
+
+  return (
+    <div>
+      <SectionTitle action={
+        <button onClick={() => { setShowForm(!showForm); setEditing(null); setForm({ title: '', content: '', priority: '中' }); }}
+          style={s.btn()}>
+          {showForm ? '✕ 取消' : '＋ 新增公告'}
+        </button>
+      }>📢 公告管理</SectionTitle>
+
+      {showForm && (
+        <div style={{ ...s.card, marginBottom: 16 }}>
+          <div style={{ color: C.text, fontWeight: 600, marginBottom: 12 }}>
+            {editing ? '✏️ 編輯公告' : '📝 新增公告'}
+          </div>
+          <div style={{ display: 'grid', gap: 12 }}>
+            <div>
+              <label style={{ color: C.textMuted, fontSize: 12, display: 'block', marginBottom: 4 }}>標題</label>
+              <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
+                style={{ ...s.input, width: '100%', boxSizing: 'border-box' }} placeholder="公告標題" />
+            </div>
+            <div>
+              <label style={{ color: C.textMuted, fontSize: 12, display: 'block', marginBottom: 4 }}>內容</label>
+              <textarea value={form.content} onChange={e => setForm(f => ({ ...f, content: e.target.value }))}
+                rows={3} style={{ ...s.input, width: '100%', resize: 'vertical', boxSizing: 'border-box' }}
+                placeholder="公告內容" />
+            </div>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+              <label style={{ color: C.textMuted, fontSize: 12 }}>優先級：</label>
+              {['高', '中', '低'].map(p => (
+                <label key={p} style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
+                  <input type="radio" name="priority" value={p}
+                    checked={form.priority === p} onChange={() => setForm(f => ({ ...f, priority: p }))} />
+                  <span style={{ color: priorityColor(p), fontSize: 13 }}>{p}</span>
+                </label>
+              ))}
+              <button onClick={save} style={{ ...s.btn(), marginLeft: 'auto' }}>
+                {editing ? '更新' : '發布'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div style={{ display: 'grid', gap: 12 }}>
+        {items.map(item => (
+          <div key={item.id} style={{
+            ...s.card, display: 'flex', alignItems: 'flex-start', gap: 16,
+          }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                <span style={{ color: C.white, fontWeight: 600, fontSize: 14 }}>{item.title}</span>
+                <span style={s.badge(priorityColor(item.priority))}>{item.priority}優先</span>
+                <span style={s.badge(item.status === '發布' ? C.success : C.textMuted)}>{item.status}</span>
+              </div>
+              <div style={{ color: C.textMuted, fontSize: 13 }}>{item.content}</div>
+            </div>
+            <div style={{ flexShrink: 0, textAlign: 'right' }}>
+              <div style={{ color: C.textDim, fontSize: 11, marginBottom: 8 }}>{item.date}</div>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button onClick={() => startEdit(item)} style={s.btnSm(C.primary)}>編輯</button>
+                <button onClick={() => del(item.id)} style={s.btnSm(C.danger)}>刪除</button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+function ActivitiesPage() {
+  const initActs = [
+    { id: 1, name: '🎁 新用戶歡迎禮', desc: '首次存款送100%紅利，上限NT$3,000', enabled: true, value: '100%', type: '新用戶' },
+    { id: 2, name: '💰 每日簽到獎勵', desc: '每日登入送10-100點數', enabled: true, value: '10-100點', type: '常規' },
+    { id: 3, name: '🔄 救援金活動', desc: '當日輸超過NT$1,000送10%救援金', enabled: false, value: '10%', type: '常規' },
+    { id: 4, name: '👥 好友推薦', desc: '推薦好友成功存款，雙方各得200點', enabled: true, value: '200點', type: '推薦' },
+    { id: 5, name: '🎂 生日禮金', desc: '生日當週存款送雙倍紅利', enabled: true, value: '200%', type: 'VIP' },
+    { id: 6, name: '⚡ 閃充活動', desc: '特定時段存款享1.5倍紅利', enabled: false, value: '150%', type: '限時' },
+    { id: 7, name: '🏆 週排行獎勵', desc: '每週遊戲點數排行前10名特別獎勵', enabled: true, value: '前10名', type: '競賽' },
+  ];
+  const [acts, setActs] = useState(initActs);
+  const toggle = id => setActs(as => as.map(a => a.id === id ? { ...a, enabled: !a.enabled } : a));
+  const typeColor = t => {
+    const m = { '新用戶': C.success, '常規': C.primary, '推薦': C.warning, 'VIP': '#a855f7', '限時': C.danger, '競賽': '#06b6d4' };
+    return m[t] || C.textMuted;
+  };
+  return (
+    <div>
+      <SectionTitle action={<button style={s.btn()}>＋ 新增活動</button>}>🎁 活動設定</SectionTitle>
+      <div style={{ display: 'grid', gap: 12 }}>
+        {acts.map(a => (
+          <div key={a.id} style={{
+            ...s.card, display: 'flex', alignItems: 'center', gap: 16,
+            opacity: a.enabled ? 1 : 0.55,
+          }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                <span style={{ color: C.white, fontWeight: 600, fontSize: 14 }}>{a.name}</span>
+                <span style={s.badge(typeColor(a.type))}>{a.type}</span>
+              </div>
+              <div style={{ color: C.textMuted, fontSize: 12 }}>{a.desc}</div>
+            </div>
+            <div style={{ color: C.primary, fontWeight: 700, fontSize: 15, width: 80, textAlign: 'center' }}>
+              {a.value}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+              <span style={{ color: a.enabled ? C.success : C.textDim, fontSize: 12 }}>
+                {a.enabled ? '進行中' : '已停用'}
+              </span>
+              <Toggle value={a.enabled} onChange={() => toggle(a.id)} />
+            </div>
+            <button style={s.btnSm(C.primary)}>設定</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+function PaymentPage() {
+  const initMethods = [
+    { id: 'linepay', name: 'LINE Pay', icon: '💚', enabled: true, minDeposit: 100, maxDeposit: 30000, fee: 1.5 },
+    { id: 'jkopay',  name: '街口支付', icon: '🔵', enabled: true, minDeposit: 100, maxDeposit: 20000, fee: 1.2 },
+    { id: 'bank',    name: '銀行轉帳', icon: '🏦', enabled: true, minDeposit: 1000, maxDeposit: 200000, fee: 0 },
+    { id: 'crypto',  name: '虛擬貨幣', icon: '₿', enabled: false, minDeposit: 500, maxDeposit: 100000, fee: 0.5 },
+  ];
+  const [methods, setMethods] = useState(initMethods);
+  const update = (id, f, v) => setMethods(ms => ms.map(m => m.id === id ? { ...m, [f]: v } : m));
+
+  return (
+    <div>
+      <SectionTitle>💳 付款設定</SectionTitle>
+      <div style={{ display: 'grid', gap: 16 }}>
+        {methods.map(m => (
+          <div key={m.id} style={{ ...s.card, opacity: m.enabled ? 1 : 0.6 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+              <span style={{ fontSize: 24 }}>{m.icon}</span>
+              <span style={{ color: C.white, fontWeight: 700, fontSize: 16 }}>{m.name}</span>
+              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ color: m.enabled ? C.success : C.danger, fontSize: 12 }}>
+                  {m.enabled ? '啟用中' : '已停用'}
+                </span>
+                <Toggle value={m.enabled} onChange={v => update(m.id, 'enabled', v)} />
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
               {[
-                ['手機', selected.phone || '未綁定'],
-                ['餘額', `$${selected.balance?.toFixed(2)}`],
-                ['VIP等級', `Lv.${selected.vip_level}`],
-                ['狀態', selected.is_blocked ? '🔴 封鎖中' : '🟢 正常'],
-                ['遊戲局數', selected.game_count || 0],
-                ['總投注', `$${(selected.total_bet || 0).toFixed(0)}`],
-              ].map(([k, v]) => (
-                <div key={k} style={{ background: BG2, borderRadius: 8, padding: '10px 14px' }}>
-                  <div style={{ color: '#666', fontSize: 11 }}>{k}</div>
-                  <div style={{ color: '#ddd', fontSize: 14, fontWeight: 'bold', marginTop: 2 }}>{v}</div>
+                { label: '最低存款 (NT$)', field: 'minDeposit' },
+                { label: '最高存款 (NT$)', field: 'maxDeposit' },
+                { label: '手續費 (%)', field: 'fee' },
+              ].map(({ label, field }) => (
+                <div key={field}>
+                  <label style={{ color: C.textMuted, fontSize: 11, display: 'block', marginBottom: 4 }}>{label}</label>
+                  <input
+                    value={m[field]}
+                    onChange={e => update(m.id, field, e.target.value)}
+                    style={{ ...s.input, width: '100%', boxSizing: 'border-box' }}
+                  />
                 </div>
               ))}
             </div>
-
-            {/* 操作區 */}
-            <div style={{ display: 'grid', gap: 12 }}>
-              <button onClick={() => handleBlock(selected)}
-                style={{ ...btn(selected.is_blocked ? GREEN : RED), width: '100%', padding: 10 }}>
-                {selected.is_blocked ? '🔓 解鎖帳號' : '🔒 封鎖帳號'}
-              </button>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <input value={adjAmt} onChange={e => setAdjAmt(e.target.value)}
-                  placeholder="調整金額（負數扣除）" style={{ ...inputStyle, flex: 1 }} type="number" />
-                <button onClick={() => handleBalance(selected)} style={btn(GOLD)}>調整</button>
-              </div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <input value={vipVal} onChange={e => setVipVal(e.target.value)}
-                  placeholder="設定VIP等級 0-10" style={{ ...inputStyle, flex: 1 }} type="number" min="0" max="10" />
-                <button onClick={() => handleVip(selected)} style={btn(PURPLE)}>更新VIP</button>
-              </div>
-            </div>
-
-            {/* 最近遊戲紀錄 */}
-            {selected.recent_games && selected.recent_games.length > 0 && (
-              <div style={{ marginTop: 16 }}>
-                <div style={{ color: '#aaa', fontSize: 13, marginBottom: 8 }}>🎮 最近遊戲紀錄</div>
-                {selected.recent_games.map((g, i) => (
-                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #1e2d45', fontSize: 13 }}>
-                    <span style={{ color: '#aaa' }}>{g.game_type}</span>
-                    <span style={{ color: g.win > 0 ? GREEN : '#aaa' }}>
-                      {g.win > 0 ? `+$${g.win}` : `-$${g.bet}`}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
-        </div>
-      )}
-
-      {/* 用戶列表 */}
-      {filtered.map(u => (
-        <div key={u.id} style={{ ...card, cursor: 'pointer' }} onClick={() => setSelected(u)}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ color: '#fff', fontWeight: 'bold' }}>{u.username}</span>
-                <span style={badge(u.vip_level > 0 ? GOLD : '#666')}>VIP {u.vip_level}</span>
-                {u.is_blocked && <span style={badge(RED)}>封鎖</span>}
-              </div>
-              <div style={{ color: '#666', fontSize: 12, marginTop: 3 }}>
-                {u.phone || '未綁定手機'} · ID:{u.id}
-              </div>
-              <div style={{ color: '#555', fontSize: 11, marginTop: 2 }}>
-                {new Date(u.created_at).toLocaleDateString('zh-TW')}
-              </div>
-            </div>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ color: GOLD, fontWeight: 'bold', fontSize: 16 }}>💰 {u.balance?.toFixed(0)}</div>
-              <div style={{ color: '#555', fontSize: 11, marginTop: 4 }}>點擊查看詳情</div>
-            </div>
-          </div>
-        </div>
-      ))}
+        ))}
+      </div>
+      <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end' }}>
+        <button style={s.btn()}>💾 儲存設定</button>
+      </div>
     </div>
-  )
+  );
 }
 
-// ════════════════════════════════════════════
-// Tab 3: 💰 儲值管理
-// ════════════════════════════════════════════
-function RechargeTab({ showMsg }) {
-  const [orders, setOrders] = useState([])
-  const [view, setView] = useState('pending') // pending | done
-  const [confirm, setConfirm] = useState(null)
+// ─────────────────────────────────────────────────────────────────────────────
 
-  useEffect(() => {
-    adminAPI.rechargeList().then(d => setOrders(d.orders || [])).catch(e => showMsg(e.message, 'error'))
-  }, [])
+function SecurityPage() {
+  const [blockedIPs, setBlockedIPs] = useState([
+    { ip: '103.45.67.89', reason: '多次登入失敗', blockedAt: '2026-04-17 09:15' },
+    { ip: '198.51.100.44', reason: '異常大量請求', blockedAt: '2026-04-16 14:30' },
+  ]);
+  const [newIP, setNewIP] = useState('');
 
-  const filtered = orders.filter(o => view === 'pending' ? o.status === 'pending' : o.status !== 'pending')
+  const addBlock = () => {
+    if (newIP.trim()) {
+      setBlockedIPs(bs => [...bs, { ip: newIP.trim(), reason: '手動封鎖', blockedAt: new Date().toLocaleString() }]);
+      setNewIP('');
+    }
+  };
 
-  const handleApprove = (o) => {
-    setConfirm({
-      msg: `確認核准 ${o.username} 的 $${o.amount} 儲值？`,
-      action: async () => {
-        try {
-          await adminAPI.approveRecharge(o.id)
-          setOrders(list => list.map(x => x.id === o.id ? { ...x, status: 'approved' } : x))
-          showMsg('已核准儲值')
-        } catch (e) { showMsg(e.message, 'error') }
-      }
-    })
-  }
-
-  const handleReject = (o) => {
-    setConfirm({
-      msg: `確認拒絕 ${o.username} 的 $${o.amount} 儲值？`,
-      action: async () => {
-        try {
-          await adminAPI.rejectRecharge(o.id)
-          setOrders(list => list.map(x => x.id === o.id ? { ...x, status: 'rejected' } : x))
-          showMsg('已拒絕儲值')
-        } catch (e) { showMsg(e.message, 'error') }
-      }
-    })
-  }
+  const unblock = ip => setBlockedIPs(bs => bs.filter(b => b.ip !== ip));
 
   return (
     <div>
-      <Confirm msg={confirm?.msg} onYes={() => { confirm?.action(); setConfirm(null) }} onNo={() => setConfirm(null)} />
+      <SectionTitle>🔐 安全中心</SectionTitle>
 
-      <div style={{ display: 'flex', background: BG3, borderRadius: 10, padding: 4, marginBottom: 16, gap: 4 }}>
-        {[['pending', '⏳ 待審核'], ['done', '✅ 已完成']].map(([k, l]) => (
-          <button key={k} onClick={() => setView(k)} style={{
-            flex: 1, padding: '8px', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 'bold',
-            background: view === k ? GOLD : 'transparent', color: view === k ? '#000' : '#666'
-          }}>{l}</button>
-        ))}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+        <KPICard icon="🔑" title="今日 OTP 驗證" value="248" sub="+12 vs 昨日" color={C.primary} trend="+" />
+        <KPICard icon="🚫" title="今日攔截請求" value="31" sub="3 個可疑 IP" color={C.danger} trend="-" />
       </div>
 
-      {filtered.length === 0 && <div style={{ textAlign: 'center', color: '#555', padding: 40 }}>無記錄</div>}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <div style={s.card}>
+          <div style={{ color: C.text, fontWeight: 600, marginBottom: 12 }}>📋 OTP 驗證記錄</div>
+          <Table
+            headers={['用戶', 'IP', '時間', '結果']}
+            rows={mockOTP.map((o, i) => (
+              <tr key={i}>
+                <td style={s.td}>{o.user}</td>
+                <td style={{ ...s.td, fontFamily: 'monospace', fontSize: 11, color: C.textMuted }}>{o.ip}</td>
+                <td style={{ ...s.td, fontSize: 11, color: C.textMuted }}>{o.time}</td>
+                <td style={s.td}>
+                  <span style={s.badge(o.status === '成功' ? C.success : C.danger)}>{o.status}</span>
+                </td>
+              </tr>
+            ))}
+          />
+        </div>
 
-      {filtered.map(o => (
-        <div key={o.id} style={card}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: o.status === 'pending' ? 12 : 0 }}>
-            <div>
-              <div style={{ color: '#fff', fontWeight: 'bold' }}>{o.username}</div>
-              <div style={{ color: '#888', fontSize: 12, marginTop: 3 }}>{o.method} · #{o.id}</div>
-              <div style={{ color: '#555', fontSize: 11 }}>{new Date(o.created_at).toLocaleString('zh-TW')}</div>
-            </div>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ color: GOLD, fontSize: 20, fontWeight: 'bold' }}>${o.amount?.toLocaleString()}</div>
-              <div style={{
-                ...badge(o.status === 'approved' ? GREEN : o.status === 'rejected' ? RED : GOLD),
-                marginTop: 6
+        <div style={s.card}>
+          <div style={{ color: C.text, fontWeight: 600, marginBottom: 12 }}>🚫 IP 封鎖名單</div>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+            <input
+              placeholder="輸入 IP 位址"
+              value={newIP} onChange={e => setNewIP(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && addBlock()}
+              style={{ ...s.input, flex: 1 }}
+            />
+            <button onClick={addBlock} style={s.btn(C.danger)}>封鎖</button>
+          </div>
+          {blockedIPs.length === 0
+            ? <div style={{ color: C.textDim, textAlign: 'center', padding: '20px 0' }}>無封鎖 IP</div>
+            : blockedIPs.map((b, i) => (
+              <div key={i} style={{
+                display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0',
+                borderBottom: i < blockedIPs.length - 1 ? `1px solid ${C.border}44` : 'none',
               }}>
-                {o.status === 'approved' ? '✅ 已核准' : o.status === 'rejected' ? '❌ 已拒絕' : '⏳ 待審核'}
+                <span style={{ fontFamily: 'monospace', color: C.danger, fontSize: 13, flex: 1 }}>{b.ip}</span>
+                <span style={{ color: C.textMuted, fontSize: 11, flex: 1 }}>{b.reason}</span>
+                <button onClick={() => unblock(b.ip)} style={s.btnSm(C.success)}>解除</button>
               </div>
-            </div>
-          </div>
-          {o.status === 'pending' && (
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={() => handleApprove(o)} style={{ ...btn(GREEN), flex: 1, padding: 10 }}>✅ 核准</button>
-              <button onClick={() => handleReject(o)} style={{ ...btn(RED), flex: 1, padding: 10 }}>❌ 拒絕</button>
-            </div>
-          )}
+            ))
+          }
         </div>
-      ))}
+      </div>
     </div>
-  )
+  );
 }
 
-// ════════════════════════════════════════════
-// Tab 4: 💸 提款管理
-// ════════════════════════════════════════════
-function WithdrawTab({ showMsg }) {
-  const [orders, setOrders] = useState([])
-  const [view, setView] = useState('pending')
-  const [confirm, setConfirm] = useState(null)
+// ─────────────────────────────────────────────────────────────────────────────
 
-  useEffect(() => {
-    adminAPI.withdrawList().then(d => setOrders(d.orders || [])).catch(e => showMsg(e.message, 'error'))
-  }, [])
-
-  const filtered = orders.filter(o => view === 'pending' ? o.status === 'pending' : o.status !== 'pending')
-
-  const handleApprove = (o) => {
-    setConfirm({
-      msg: `確認核准 ${o.username} 的 $${o.amount} 提款？`,
-      action: async () => {
-        try {
-          await adminAPI.approveWithdraw(o.id)
-          setOrders(list => list.map(x => x.id === o.id ? { ...x, status: 'approved' } : x))
-          showMsg('已核准提款')
-        } catch (e) { showMsg(e.message, 'error') }
-      }
-    })
-  }
-
-  const handleReject = (o) => {
-    setConfirm({
-      msg: `確認拒絕 ${o.username} 的提款申請？`,
-      action: async () => {
-        try {
-          await adminAPI.rejectWithdraw(o.id)
-          setOrders(list => list.map(x => x.id === o.id ? { ...x, status: 'rejected' } : x))
-          showMsg('已拒絕提款')
-        } catch (e) { showMsg(e.message, 'error') }
-      }
-    })
-  }
-
-  return (
-    <div>
-      <Confirm msg={confirm?.msg} onYes={() => { confirm?.action(); setConfirm(null) }} onNo={() => setConfirm(null)} />
-
-      <div style={{ display: 'flex', background: BG3, borderRadius: 10, padding: 4, marginBottom: 16, gap: 4 }}>
-        {[['pending', '⏳ 待審核'], ['done', '📋 紀錄查詢']].map(([k, l]) => (
-          <button key={k} onClick={() => setView(k)} style={{
-            flex: 1, padding: '8px', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 'bold',
-            background: view === k ? GOLD : 'transparent', color: view === k ? '#000' : '#666'
-          }}>{l}</button>
-        ))}
-      </div>
-
-      {filtered.length === 0 && <div style={{ textAlign: 'center', color: '#555', padding: 40 }}>無提款記錄</div>}
-
-      {filtered.map(o => (
-        <div key={o.id} style={card}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: o.status === 'pending' ? 12 : 0 }}>
-            <div>
-              <div style={{ color: '#fff', fontWeight: 'bold' }}>{o.username}</div>
-              <div style={{ color: '#888', fontSize: 12, marginTop: 3 }}>
-                {o.bank_name || '銀行轉帳'} {o.bank_account ? `· ${o.bank_account}` : ''}
-              </div>
-              <div style={{ color: '#555', fontSize: 11 }}>{new Date(o.created_at).toLocaleString('zh-TW')}</div>
-            </div>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ color: RED, fontSize: 20, fontWeight: 'bold' }}>-${o.amount?.toLocaleString()}</div>
-              <div style={{
-                ...badge(o.status === 'approved' ? GREEN : o.status === 'rejected' ? RED : GOLD),
-                marginTop: 6
-              }}>
-                {o.status === 'approved' ? '✅ 已核准' : o.status === 'rejected' ? '❌ 已拒絕' : '⏳ 待審核'}
-              </div>
-            </div>
-          </div>
-          {o.status === 'pending' && (
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={() => handleApprove(o)} style={{ ...btn(GREEN), flex: 1, padding: 10 }}>✅ 核准</button>
-              <button onClick={() => handleReject(o)} style={{ ...btn(RED), flex: 1, padding: 10 }}>❌ 拒絕</button>
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
-  )
-}
-
-// ════════════════════════════════════════════
-// Tab 5: 🎰 遊戲設定
-// ════════════════════════════════════════════
-function GameSettingsTab({ showMsg }) {
-  const [settings, setSettings] = useState([])
-  const [saving, setSaving] = useState(null)
-
-  const GAMES = [
-    { id: 'slot', name: '🎰 老虎機' },
-    { id: 'baccarat', name: '🃏 百家樂' },
-    { id: 'dice', name: '🎲 骰寶' },
-    { id: 'roulette', name: '🎡 輪盤' },
-    { id: 'crash', name: '🚀 一飛沖天' },
-    { id: 'blackjack', name: '♠️ 21點' },
-    { id: 'fishing', name: '🎣 捕魚機' },
-    { id: 'mines', name: '💣 地雷爆破' },
-    { id: 'lottery', name: '🎱 超級彩球' },
-  ]
-
-  useEffect(() => {
-    adminAPI.gameSettings().then(d => {
-      const base = GAMES.map(g => ({
-        ...g,
-        rtp: d[g.id]?.rtp ?? 95,
-        enabled: d[g.id]?.enabled ?? true,
-        jackpot: d[g.id]?.jackpot ?? 100000,
-        max_bet: d[g.id]?.max_bet ?? 10000,
-      }))
-      setSettings(base)
-    }).catch(() => {
-      setSettings(GAMES.map(g => ({ ...g, rtp: 95, enabled: true, jackpot: 100000, max_bet: 10000 })))
-    })
-  }, [])
-
-  const update = (id, key, val) => {
-    setSettings(list => list.map(g => g.id === id ? { ...g, [key]: val } : g))
-  }
-
-  const save = async (g) => {
-    setSaving(g.id)
-    try {
-      await adminAPI.updateGameSetting(g.id, { rtp: g.rtp, enabled: g.enabled, jackpot: g.jackpot, max_bet: g.max_bet })
-      showMsg(`${g.name} 設定已保存`)
-    } catch (e) { showMsg(e.message, 'error') }
-    setSaving(null)
-  }
-
-  return (
-    <div>
-      {settings.map(g => (
-        <div key={g.id} style={card}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-            <span style={{ color: '#fff', fontWeight: 'bold', fontSize: 15 }}>{g.name}</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ color: g.enabled ? GREEN : '#666', fontSize: 13 }}>{g.enabled ? '開啟' : '關閉'}</span>
-              <div
-                onClick={() => update(g.id, 'enabled', !g.enabled)}
-                style={{
-                  width: 44, height: 24, borderRadius: 12, cursor: 'pointer',
-                  background: g.enabled ? GREEN : '#333',
-                  position: 'relative', transition: 'background 0.2s'
-                }}>
-                <div style={{
-                  width: 20, height: 20, borderRadius: '50%', background: '#fff',
-                  position: 'absolute', top: 2, left: g.enabled ? 22 : 2, transition: 'left 0.2s'
-                }} />
-              </div>
-            </div>
-          </div>
-
-          {/* RTP 滑桿 */}
-          <div style={{ marginBottom: 12 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', color: '#aaa', fontSize: 12, marginBottom: 6 }}>
-              <span>RTP 返還率</span>
-              <span style={{ color: GOLD, fontWeight: 'bold' }}>{g.rtp}%</span>
-            </div>
-            <input type="range" min="50" max="99" value={g.rtp}
-              onChange={e => update(g.id, 'rtp', parseInt(e.target.value))}
-              style={{ width: '100%', accentColor: GOLD }} />
-            <div style={{ display: 'flex', justifyContent: 'space-between', color: '#444', fontSize: 10 }}>
-              <span>50%</span><span>75%</span><span>99%</span>
-            </div>
-          </div>
-
-          {/* JACKPOT / 最高單注 */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
-            <div>
-              <div style={{ color: '#aaa', fontSize: 12, marginBottom: 4 }}>🏆 JACKPOT金額</div>
-              <input type="number" value={g.jackpot}
-                onChange={e => update(g.id, 'jackpot', parseInt(e.target.value))}
-                style={{ ...inputStyle, fontSize: 13, padding: '8px 10px' }} />
-            </div>
-            <div>
-              <div style={{ color: '#aaa', fontSize: 12, marginBottom: 4 }}>💰 最高單注</div>
-              <input type="number" value={g.max_bet}
-                onChange={e => update(g.id, 'max_bet', parseInt(e.target.value))}
-                style={{ ...inputStyle, fontSize: 13, padding: '8px 10px' }} />
-            </div>
-          </div>
-
-          <button onClick={() => save(g)} disabled={saving === g.id}
-            style={{ ...btn(GOLD), width: '100%', padding: 9, opacity: saving === g.id ? 0.6 : 1 }}>
-            {saving === g.id ? '保存中...' : '💾 保存設定'}
-          </button>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-// ════════════════════════════════════════════
-// Tab 6: 📢 公告管理
-// ════════════════════════════════════════════
-function AnnouncementsTab({ showMsg }) {
-  const [anns, setAnns] = useState([])
-  const [form, setForm] = useState({ title: '', content: '', pinned: false, expires: '' })
-  const [editing, setEditing] = useState(null)
-  const [loading, setLoading] = useState(false)
-  const [confirm, setConfirm] = useState(null)
-
-  const load = () => {
-    adminAPI.listAnnouncements().then(d => setAnns(d.announcements || [])).catch(e => showMsg(e.message, 'error'))
-  }
-
-  useEffect(() => { load() }, [])
-
-  const handleSave = async () => {
-    if (!form.title || !form.content) return showMsg('請填寫標題和內容', 'error')
-    setLoading(true)
-    try {
-      if (editing) {
-        await adminAPI.updateAnn(editing.id, form)
-        showMsg('公告已更新')
-      } else {
-        await adminAPI.createAnn(form.title, form.content, form.pinned, form.expires)
-        showMsg('公告已發布')
-      }
-      setForm({ title: '', content: '', pinned: false, expires: '' })
-      setEditing(null)
-      load()
-    } catch (e) { showMsg(e.message, 'error') }
-    setLoading(false)
-  }
-
-  const handleEdit = (a) => {
-    setEditing(a)
-    setForm({ title: a.title, content: a.content, pinned: a.pinned || false, expires: a.expires || '' })
-    window.scrollTo(0, 0)
-  }
-
-  const handleDelete = (a) => {
-    setConfirm({
-      msg: `確認刪除公告「${a.title}」？`,
-      action: async () => {
-        try {
-          await adminAPI.deleteAnn(a.id)
-          setAnns(list => list.filter(x => x.id !== a.id))
-          showMsg('公告已刪除')
-        } catch (e) { showMsg(e.message, 'error') }
-      }
-    })
-  }
-
-  return (
-    <div>
-      <Confirm msg={confirm?.msg} onYes={() => { confirm?.action(); setConfirm(null) }} onNo={() => setConfirm(null)} />
-
-      {/* 新增/編輯表單 */}
-      <div style={{ ...card, border: `1px solid ${GOLD}44` }}>
-        <div style={{ color: GOLD, fontWeight: 'bold', marginBottom: 14 }}>
-          {editing ? '✏️ 編輯公告' : '📢 新增公告'}
-        </div>
-        <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-          placeholder="公告標題" style={{ ...inputStyle, marginBottom: 10 }} />
-        <textarea value={form.content} onChange={e => setForm(f => ({ ...f, content: e.target.value }))}
-          placeholder="公告內容" rows={3}
-          style={{ ...inputStyle, marginBottom: 10, resize: 'vertical' }} />
-        <div style={{ display: 'flex', gap: 12, marginBottom: 12, alignItems: 'center' }}>
-          <label style={{ color: '#aaa', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <input type="checkbox" checked={form.pinned} onChange={e => setForm(f => ({ ...f, pinned: e.target.checked }))} />
-            📌 置頂
-          </label>
-          <input type="date" value={form.expires} onChange={e => setForm(f => ({ ...f, expires: e.target.value }))}
-            style={{ ...inputStyle, flex: 1, padding: '8px 10px', fontSize: 13 }} />
-        </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={handleSave} disabled={loading}
-            style={{ ...btn(GOLD), flex: 1, padding: 10 }}>
-            {loading ? '儲存中...' : editing ? '✏️ 更新公告' : '📢 發布公告'}
-          </button>
-          {editing && (
-            <button onClick={() => { setEditing(null); setForm({ title: '', content: '', pinned: false, expires: '' }) }}
-              style={{ ...btn('#666'), padding: 10 }}>取消</button>
-          )}
-        </div>
-      </div>
-
-      {/* 公告列表 */}
-      {anns.map(a => (
-        <div key={a.id} style={card}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                {a.pinned && <span style={badge(GOLD)}>📌 置頂</span>}
-                <span style={{ color: '#fff', fontWeight: 'bold', fontSize: 14 }}>{a.title}</span>
-              </div>
-              <div style={{ color: '#888', fontSize: 13, marginBottom: 6 }}>{a.content}</div>
-              <div style={{ color: '#555', fontSize: 11 }}>
-                {new Date(a.created_at).toLocaleString('zh-TW')}
-                {a.expires && <span style={{ marginLeft: 8, color: '#666' }}>有效至: {a.expires}</span>}
-              </div>
-            </div>
-            <div style={{ display: 'flex', gap: 6, flexShrink: 0, marginLeft: 10 }}>
-              <button onClick={() => handleEdit(a)} style={{ ...btn(BLUE), padding: '6px 10px', fontSize: 12 }}>✏️</button>
-              <button onClick={() => handleDelete(a)} style={{ ...btn(RED), padding: '6px 10px', fontSize: 12 }}>🗑️</button>
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-// ════════════════════════════════════════════
-// Tab 7: 🎁 活動設定
-// ════════════════════════════════════════════
-function ActivitiesTab({ showMsg }) {
-  const [settings, setSettings] = useState({
-    new_user_bonus: 1000,
-    daily_checkin_base: 50,
-    recharge_bonus_rate: 0,
-    new_user_bonus_enabled: true,
-    daily_checkin_enabled: true,
-    recharge_bonus_enabled: false,
-    referral_bonus: 200,
-    referral_enabled: false,
-  })
-  const [saving, setSaving] = useState(false)
-
-  useEffect(() => {
-    adminAPI.activitySettings().then(d => setSettings(s => ({ ...s, ...d }))).catch(() => {})
-  }, [])
-
-  const update = (key, val) => setSettings(s => ({ ...s, [key]: val }))
-
-  const handleSave = async () => {
-    setSaving(true)
-    try {
-      await adminAPI.updateActivitySettings(settings)
-      showMsg('活動設定已保存')
-    } catch (e) { showMsg(e.message, 'error') }
-    setSaving(false)
-  }
-
-  const Toggle = ({ k, label }) => (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-      <span style={{ color: '#ddd', fontSize: 14 }}>{label}</span>
-      <div onClick={() => update(k, !settings[k])} style={{
-        width: 44, height: 24, borderRadius: 12, cursor: 'pointer',
-        background: settings[k] ? GREEN : '#333', position: 'relative', transition: 'background 0.2s'
-      }}>
-        <div style={{
-          width: 20, height: 20, borderRadius: '50%', background: '#fff',
-          position: 'absolute', top: 2, left: settings[k] ? 22 : 2, transition: 'left 0.2s'
-        }} />
-      </div>
-    </div>
-  )
-
-  return (
-    <div>
-      <div style={card}>
-        <div style={{ color: GOLD, fontWeight: 'bold', marginBottom: 16 }}>🎁 新用戶獎勵</div>
-        <Toggle k="new_user_bonus_enabled" label="新用戶贈點活動" />
-        <div style={{ color: '#aaa', fontSize: 12, marginBottom: 6 }}>贈送點數</div>
-        <input type="number" value={settings.new_user_bonus}
-          onChange={e => update('new_user_bonus', parseInt(e.target.value))}
-          style={{ ...inputStyle, marginBottom: 0 }} />
-      </div>
-
-      <div style={card}>
-        <div style={{ color: GOLD, fontWeight: 'bold', marginBottom: 16 }}>📅 每日登入獎勵</div>
-        <Toggle k="daily_checkin_enabled" label="每日簽到活動" />
-        <div style={{ color: '#aaa', fontSize: 12, marginBottom: 6 }}>基礎獎勵點數</div>
-        <input type="number" value={settings.daily_checkin_base}
-          onChange={e => update('daily_checkin_base', parseInt(e.target.value))}
-          style={inputStyle} />
-        <div style={{ color: '#666', fontSize: 11, marginTop: 6 }}>每VIP等級額外 +20點</div>
-      </div>
-
-      <div style={card}>
-        <div style={{ color: GOLD, fontWeight: 'bold', marginBottom: 16 }}>💳 儲值加碼</div>
-        <Toggle k="recharge_bonus_enabled" label="儲值加碼活動" />
-        <div style={{ color: '#aaa', fontSize: 12, marginBottom: 6 }}>加碼比例 (%)</div>
-        <input type="number" min="0" max="100" value={settings.recharge_bonus_rate}
-          onChange={e => update('recharge_bonus_rate', parseInt(e.target.value))}
-          style={inputStyle} />
-        <div style={{ color: '#666', fontSize: 11, marginTop: 6 }}>例如：設為 20 表示儲值送 20%</div>
-      </div>
-
-      <div style={card}>
-        <div style={{ color: GOLD, fontWeight: 'bold', marginBottom: 16 }}>👥 推薦獎勵</div>
-        <Toggle k="referral_enabled" label="推薦好友活動" />
-        <div style={{ color: '#aaa', fontSize: 12, marginBottom: 6 }}>推薦獎勵點數</div>
-        <input type="number" value={settings.referral_bonus}
-          onChange={e => update('referral_bonus', parseInt(e.target.value))}
-          style={inputStyle} />
-      </div>
-
-      <button onClick={handleSave} disabled={saving}
-        style={{ ...btn(GOLD), width: '100%', padding: 14, fontSize: 15 }}>
-        {saving ? '保存中...' : '💾 保存所有活動設定'}
-      </button>
-    </div>
-  )
-}
-
-// ════════════════════════════════════════════
-// Tab 8: 💳 付款設定
-// ════════════════════════════════════════════
-function PaymentTab({ showMsg }) {
-  const [settings, setSettings] = useState({
-    linepay_account: '',
-    jkopay_account: '',
-    bank_name: '',
-    bank_account: '',
-    bank_holder: '',
-    min_recharge: 300,
-    min_withdraw: 500,
-    max_recharge: 100000,
-    max_withdraw: 50000,
-  })
-  const [saving, setSaving] = useState(false)
-
-  useEffect(() => {
-    adminAPI.paymentSettings().then(d => setSettings(s => ({ ...s, ...d }))).catch(() => {})
-  }, [])
-
-  const update = (k, v) => setSettings(s => ({ ...s, [k]: v }))
-
-  const handleSave = async () => {
-    setSaving(true)
-    try {
-      await adminAPI.updatePaymentSettings(settings)
-      showMsg('付款設定已保存')
-    } catch (e) { showMsg(e.message, 'error') }
-    setSaving(false)
-  }
-
-  const Field = ({ label, k, placeholder, type = 'text' }) => (
-    <div style={{ marginBottom: 12 }}>
-      <div style={{ color: '#aaa', fontSize: 12, marginBottom: 5 }}>{label}</div>
-      <input value={settings[k]} onChange={e => update(k, type === 'number' ? parseInt(e.target.value) : e.target.value)}
-        placeholder={placeholder} type={type} style={inputStyle} />
-    </div>
-  )
-
-  return (
-    <div>
-      <div style={card}>
-        <div style={{ color: GOLD, fontWeight: 'bold', marginBottom: 16 }}>📱 電子支付</div>
-        <Field label="LINE Pay 帳號" k="linepay_account" placeholder="LINE Pay 手機號碼或帳號" />
-        <Field label="街口支付帳號" k="jkopay_account" placeholder="街口支付帳號" />
-      </div>
-
-      <div style={card}>
-        <div style={{ color: GOLD, fontWeight: 'bold', marginBottom: 16 }}>🏦 銀行帳號</div>
-        <Field label="銀行名稱" k="bank_name" placeholder="例：台灣銀行" />
-        <Field label="銀行帳號" k="bank_account" placeholder="銀行帳號（無空格）" />
-        <Field label="戶名" k="bank_holder" placeholder="開戶人姓名" />
-      </div>
-
-      <div style={card}>
-        <div style={{ color: GOLD, fontWeight: 'bold', marginBottom: 16 }}>💰 儲值/提款限額</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          <div>
-            <div style={{ color: '#aaa', fontSize: 12, marginBottom: 5 }}>最低儲值</div>
-            <input type="number" value={settings.min_recharge}
-              onChange={e => update('min_recharge', parseInt(e.target.value))} style={inputStyle} />
-          </div>
-          <div>
-            <div style={{ color: '#aaa', fontSize: 12, marginBottom: 5 }}>最高儲值</div>
-            <input type="number" value={settings.max_recharge}
-              onChange={e => update('max_recharge', parseInt(e.target.value))} style={inputStyle} />
-          </div>
-          <div>
-            <div style={{ color: '#aaa', fontSize: 12, marginBottom: 5 }}>最低提款</div>
-            <input type="number" value={settings.min_withdraw}
-              onChange={e => update('min_withdraw', parseInt(e.target.value))} style={inputStyle} />
-          </div>
-          <div>
-            <div style={{ color: '#aaa', fontSize: 12, marginBottom: 5 }}>最高提款</div>
-            <input type="number" value={settings.max_withdraw}
-              onChange={e => update('max_withdraw', parseInt(e.target.value))} style={inputStyle} />
-          </div>
-        </div>
-      </div>
-
-      <button onClick={handleSave} disabled={saving}
-        style={{ ...btn(GOLD), width: '100%', padding: 14, fontSize: 15 }}>
-        {saving ? '保存中...' : '💾 保存付款設定'}
-      </button>
-    </div>
-  )
-}
-
-// ════════════════════════════════════════════
-// Tab 9: 🔐 安全管理
-// ════════════════════════════════════════════
-function SecurityTab({ showMsg }) {
-  const [otpList, setOtpList] = useState([])
-  const [suspicious, setSuspicious] = useState([])
-  const [blockedIPs, setBlockedIPs] = useState([])
-  const [loginFails, setLoginFails] = useState([])
-  const [newIP, setNewIP] = useState('')
-  const [view, setView] = useState('otp')
-
-  useEffect(() => {
-    adminAPI.otpList().then(d => setOtpList(d.otps || [])).catch(() => {})
-    adminAPI.suspiciousAccounts().then(d => {
-      setSuspicious(d.suspicious || [])
-      setBlockedIPs(d.blocked_ips || [])
-      setLoginFails(d.login_fails || [])
-    }).catch(() => {})
-  }, [])
-
-  const handleBlockIP = async () => {
-    if (!newIP.trim()) return showMsg('請輸入IP地址', 'error')
-    try {
-      await adminAPI.blockIP(newIP.trim())
-      setBlockedIPs(list => [...list, { ip: newIP.trim(), blocked_at: new Date().toISOString() }])
-      setNewIP('')
-      showMsg(`已封鎖 IP: ${newIP}`)
-    } catch (e) { showMsg(e.message, 'error') }
-  }
-
-  const handleUnblockIP = async (ip) => {
-    try {
-      await adminAPI.unblockIP(ip)
-      setBlockedIPs(list => list.filter(x => x.ip !== ip))
-      showMsg(`已解鎖 IP: ${ip}`)
-    } catch (e) { showMsg(e.message, 'error') }
-  }
-
-  const views = [
-    ['otp', '🔑 OTP'],
-    ['suspicious', '⚠️ 可疑'],
-    ['ip', '🛡️ IP'],
-    ['fails', '🔒 失敗'],
-  ]
-
-  return (
-    <div>
-      <div style={{ display: 'flex', background: BG3, borderRadius: 10, padding: 4, marginBottom: 16, gap: 4 }}>
-        {views.map(([k, l]) => (
-          <button key={k} onClick={() => setView(k)} style={{
-            flex: 1, padding: '8px 4px', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 'bold',
-            background: view === k ? GOLD : 'transparent', color: view === k ? '#000' : '#666'
-          }}>{l}</button>
-        ))}
-      </div>
-
-      {/* OTP 列表 */}
-      {view === 'otp' && (
-        <div>
-          <div style={{ color: '#888', fontSize: 12, marginBottom: 10 }}>📌 顯示所有有效驗證碼（5分鐘內有效）</div>
-          {otpList.length === 0 && <div style={{ textAlign: 'center', color: '#555', padding: 40 }}>目前無有效OTP</div>}
-          {otpList.map((o, i) => (
-            <div key={i} style={{ ...card, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <div style={{ color: '#fff', fontWeight: 'bold' }}>{o.phone}</div>
-                <div style={{ color: '#666', fontSize: 12, marginTop: 2 }}>
-                  到期：{o.expires ? new Date(o.expires).toLocaleTimeString('zh-TW') : '-'}
-                </div>
-              </div>
-              <div style={{
-                background: '#1a3a1a', border: `1px solid ${GREEN}44`,
-                color: GREEN, fontSize: 22, fontWeight: 'bold',
-                padding: '8px 16px', borderRadius: 8, letterSpacing: 4
-              }}>{o.otp}</div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* 可疑帳號 */}
-      {view === 'suspicious' && (
-        <div>
-          <div style={{ color: '#888', fontSize: 12, marginBottom: 10 }}>⚠️ 異常大額或短時間多次交易帳號</div>
-          {suspicious.length === 0 && <div style={{ textAlign: 'center', color: '#555', padding: 40 }}>暫無可疑帳號</div>}
-          {suspicious.map((u, i) => (
-            <div key={i} style={{ ...card, border: `1px solid ${RED}44` }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <div>
-                  <div style={{ color: '#fff', fontWeight: 'bold' }}>{u.username}</div>
-                  <div style={{ color: RED, fontSize: 12, marginTop: 3 }}>{u.reason}</div>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={badge(RED)}>{u.risk_level || '高風險'}</div>
-                  <div style={{ color: '#666', fontSize: 11, marginTop: 4 }}>
-                    ${(u.large_amount || 0).toLocaleString()}
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* IP 封鎖 */}
-      {view === 'ip' && (
-        <div>
-          <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-            <input value={newIP} onChange={e => setNewIP(e.target.value)}
-              placeholder="輸入要封鎖的IP地址" style={{ ...inputStyle, flex: 1 }} />
-            <button onClick={handleBlockIP} style={btn(RED)}>封鎖</button>
-          </div>
-          {blockedIPs.length === 0 && <div style={{ textAlign: 'center', color: '#555', padding: 30 }}>無封鎖IP</div>}
-          {blockedIPs.map((ip, i) => (
-            <div key={i} style={{ ...card, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <div style={{ color: RED, fontWeight: 'bold' }}>{ip.ip}</div>
-                <div style={{ color: '#555', fontSize: 11 }}>{ip.blocked_at ? new Date(ip.blocked_at).toLocaleString('zh-TW') : '-'}</div>
-              </div>
-              <button onClick={() => handleUnblockIP(ip.ip)} style={{ ...btn(GREEN), padding: '6px 12px', fontSize: 12 }}>解封</button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* 登入失敗紀錄 */}
-      {view === 'fails' && (
-        <div>
-          <div style={{ color: '#888', fontSize: 12, marginBottom: 10 }}>🔒 近期登入失敗紀錄</div>
-          {loginFails.length === 0 && <div style={{ textAlign: 'center', color: '#555', padding: 40 }}>無失敗紀錄</div>}
-          {loginFails.map((f, i) => (
-            <div key={i} style={card}>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <div>
-                  <div style={{ color: '#fff' }}>{f.username || f.phone || '未知'}</div>
-                  <div style={{ color: '#666', fontSize: 12 }}>{f.ip || '-'}</div>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={badge(RED)}>失敗 {f.count || 1}次</div>
-                  <div style={{ color: '#555', fontSize: 11, marginTop: 4 }}>
-                    {f.last_attempt ? new Date(f.last_attempt).toLocaleString('zh-TW') : '-'}
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ════════════════════════════════════════════
-// Tab 10: ⚙️ 系統設定
-// ════════════════════════════════════════════
-function SystemTab({ showMsg }) {
+function SystemPage() {
   const [settings, setSettings] = useState({
     maintenance: false,
-    site_title: '城星娛樂城',
-    site_subtitle: '頂級娛樂體驗',
-    cs_line: '',
-    cs_telegram: '',
-    cs_phone: '',
-    system_announcement: '',
-  })
-  const [saving, setSaving] = useState(false)
+    maintenanceMsg: '系統維護中，預計 2 小時後恢復服務',
+    registrationOpen: true,
+    minWithdraw: 500,
+    maxWithdraw: 100000,
+    dailyWithdrawLimit: 3,
+    sessionTimeout: 30,
+    debugMode: false,
+    twoFARequired: true,
+    betLogRetention: 90,
+  });
 
-  useEffect(() => {
-    adminAPI.systemSettings().then(d => setSettings(s => ({ ...s, ...d }))).catch(() => {})
-  }, [])
+  const set = (k, v) => setSettings(s => ({ ...s, [k]: v }));
 
-  const update = (k, v) => setSettings(s => ({ ...s, [k]: v }))
-
-  const handleSave = async () => {
-    setSaving(true)
-    try {
-      await adminAPI.updateSystemSettings(settings)
-      showMsg('系統設定已保存')
-    } catch (e) { showMsg(e.message, 'error') }
-    setSaving(false)
-  }
+  const Row = ({ label, desc, children }) => (
+    <div style={{
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      padding: '14px 0', borderBottom: `1px solid ${C.border}44`,
+    }}>
+      <div>
+        <div style={{ color: C.text, fontSize: 14, fontWeight: 500 }}>{label}</div>
+        {desc && <div style={{ color: C.textMuted, fontSize: 12, marginTop: 2 }}>{desc}</div>}
+      </div>
+      <div style={{ flexShrink: 0, marginLeft: 24 }}>{children}</div>
+    </div>
+  );
 
   return (
     <div>
-      {/* 維護模式 */}
-      <div style={{ ...card, border: `1px solid ${settings.maintenance ? RED : '#2a3550'}` }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <div style={{ color: settings.maintenance ? RED : '#ddd', fontWeight: 'bold', fontSize: 16 }}>
-              🔧 維護模式
-            </div>
-            <div style={{ color: '#666', fontSize: 12, marginTop: 3 }}>
-              {settings.maintenance ? '⚠️ 網站目前處於維護模式，用戶無法登入' : '網站正常運行中'}
-            </div>
+      <SectionTitle>⚙️ 系統設定</SectionTitle>
+
+      {settings.maintenance && (
+        <div style={{
+          background: C.danger + '22', border: `1px solid ${C.danger}44`,
+          borderRadius: 10, padding: '12px 16px', marginBottom: 16,
+          color: C.danger, fontSize: 13, fontWeight: 500,
+        }}>
+          ⚠️ 維護模式已開啟 — 用戶目前無法存取平台
+        </div>
+      )}
+
+      <div style={s.card}>
+        <Row label="🔧 維護模式" desc="開啟後所有用戶將看到維護頁面">
+          <Toggle value={settings.maintenance} onChange={v => set('maintenance', v)} />
+        </Row>
+        {settings.maintenance && (
+          <div style={{ padding: '8px 0' }}>
+            <textarea
+              value={settings.maintenanceMsg}
+              onChange={e => set('maintenanceMsg', e.target.value)}
+              rows={2} style={{ ...s.input, width: '100%', boxSizing: 'border-box', resize: 'vertical' }}
+            />
           </div>
-          <div onClick={() => update('maintenance', !settings.maintenance)} style={{
-            width: 52, height: 28, borderRadius: 14, cursor: 'pointer',
-            background: settings.maintenance ? RED : '#333', position: 'relative', transition: 'background 0.2s'
-          }}>
-            <div style={{
-              width: 24, height: 24, borderRadius: '50%', background: '#fff',
-              position: 'absolute', top: 2, left: settings.maintenance ? 26 : 2, transition: 'left 0.2s'
-            }} />
-          </div>
+        )}
+        <Row label="📝 開放註冊" desc="關閉後新用戶無法註冊">
+          <Toggle value={settings.registrationOpen} onChange={v => set('registrationOpen', v)} />
+        </Row>
+        <Row label="🔐 強制 2FA" desc="要求所有用戶啟用雙重驗證">
+          <Toggle value={settings.twoFARequired} onChange={v => set('twoFARequired', v)} />
+        </Row>
+        <Row label="🐛 除錯模式" desc="啟用詳細記錄（僅限開發環境）">
+          <Toggle value={settings.debugMode} onChange={v => set('debugMode', v)} />
+        </Row>
+      </div>
+
+      <div style={{ ...s.card, marginTop: 16 }}>
+        <div style={{ color: C.text, fontWeight: 600, marginBottom: 12 }}>💸 提款限制</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+          {[
+            { label: '最低提款 (NT$)', key: 'minWithdraw' },
+            { label: '最高提款 (NT$)', key: 'maxWithdraw' },
+            { label: '每日提款次數', key: 'dailyWithdrawLimit' },
+          ].map(({ label, key }) => (
+            <div key={key}>
+              <label style={{ color: C.textMuted, fontSize: 11, display: 'block', marginBottom: 4 }}>{label}</label>
+              <input
+                value={settings[key]}
+                onChange={e => set(key, e.target.value)}
+                style={{ ...s.input, width: '100%', boxSizing: 'border-box' }}
+              />
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* 網站設定 */}
-      <div style={card}>
-        <div style={{ color: GOLD, fontWeight: 'bold', marginBottom: 16 }}>🌐 網站設定</div>
-        {[
-          ['site_title', '網站標題'],
-          ['site_subtitle', '網站副標題'],
-        ].map(([k, label]) => (
-          <div key={k} style={{ marginBottom: 12 }}>
-            <div style={{ color: '#aaa', fontSize: 12, marginBottom: 5 }}>{label}</div>
-            <input value={settings[k]} onChange={e => update(k, e.target.value)} style={inputStyle} />
-          </div>
-        ))}
+      <div style={{ ...s.card, marginTop: 16 }}>
+        <div style={{ color: C.text, fontWeight: 600, marginBottom: 12 }}>⏱ 其他設定</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
+          {[
+            { label: 'Session 逾時 (分鐘)', key: 'sessionTimeout' },
+            { label: '下注記錄保留天數', key: 'betLogRetention' },
+          ].map(({ label, key }) => (
+            <div key={key}>
+              <label style={{ color: C.textMuted, fontSize: 11, display: 'block', marginBottom: 4 }}>{label}</label>
+              <input
+                value={settings[key]}
+                onChange={e => set(key, e.target.value)}
+                style={{ ...s.input, width: '100%', boxSizing: 'border-box' }}
+              />
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* 客服設定 */}
-      <div style={card}>
-        <div style={{ color: GOLD, fontWeight: 'bold', marginBottom: 16 }}>🎧 客服聯絡方式</div>
-        {[
-          ['cs_line', 'LINE ID'],
-          ['cs_telegram', 'Telegram 帳號'],
-          ['cs_phone', '客服電話'],
-        ].map(([k, label]) => (
-          <div key={k} style={{ marginBottom: 12 }}>
-            <div style={{ color: '#aaa', fontSize: 12, marginBottom: 5 }}>{label}</div>
-            <input value={settings[k]} onChange={e => update(k, e.target.value)}
-              placeholder={`請輸入${label}`} style={inputStyle} />
-          </div>
-        ))}
+      <div style={{ marginTop: 16, display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+        <button style={s.btn(C.textDim, true)}>重置預設值</button>
+        <button style={s.btn()}>💾 儲存所有設定</button>
       </div>
-
-      {/* 系統公告 */}
-      <div style={card}>
-        <div style={{ color: GOLD, fontWeight: 'bold', marginBottom: 12 }}>📋 系統跑馬燈公告</div>
-        <textarea value={settings.system_announcement}
-          onChange={e => update('system_announcement', e.target.value)}
-          placeholder="顯示在網站頂部的跑馬燈公告文字" rows={3}
-          style={{ ...inputStyle, resize: 'vertical' }} />
-      </div>
-
-      <button onClick={handleSave} disabled={saving}
-        style={{ ...btn(GOLD), width: '100%', padding: 14, fontSize: 15 }}>
-        {saving ? '保存中...' : '💾 保存系統設定'}
-      </button>
     </div>
-  )
+  );
 }
 
-// ════════════════════════════════════════════
-// 主 AdminPage 組件
-// ════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════════
+// ─── MAIN ADMIN PAGE ──────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const MENU = [
+  { key: 'dashboard',     icon: '🏠', label: '儀表板' },
+  { key: 'users',         icon: '👥', label: '用戶管理' },
+  { key: 'deposits',      icon: '💰', label: '儲值審核',  badge: 3 },
+  { key: 'withdrawals',   icon: '💸', label: '提款審核',  badge: 2 },
+  { key: 'games',         icon: '🎰', label: '遊戲設定' },
+  { key: 'announcements', icon: '📢', label: '公告管理' },
+  { key: 'activities',    icon: '🎁', label: '活動設定' },
+  { key: 'payment',       icon: '💳', label: '付款設定' },
+  { key: 'security',      icon: '🔐', label: '安全中心' },
+  { key: 'system',        icon: '⚙️', label: '系統設定' },
+];
+
+const PAGE_COMPONENTS = {
+  dashboard:     DashboardPage,
+  users:         UsersPage,
+  deposits:      DepositPage,
+  withdrawals:   WithdrawPage,
+  games:         GamesPage,
+  announcements: AnnouncementsPage,
+  activities:    ActivitiesPage,
+  payment:       PaymentPage,
+  security:      SecurityPage,
+  system:        SystemPage,
+};
+
 export default function AdminPage() {
-  const { user } = useAuth()
-  const [tab, setTab] = useState('dashboard')
-  const [toast, setToast] = useState({ msg: '', type: 'success' })
-  const toastTimer = useRef()
+  const [active, setActive] = useState('dashboard');
+  const [collapsed, setCollapsed] = useState(false);
 
-  const showMsg = (msg, type = 'success') => {
-    setToast({ msg, type })
-    clearTimeout(toastTimer.current)
-    toastTimer.current = setTimeout(() => setToast({ msg: '', type: 'success' }), 3000)
-  }
-
-  const TABS = [
-    { key: 'dashboard', icon: '📊', label: '總覽' },
-    { key: 'users', icon: '👥', label: '用戶' },
-    { key: 'recharge', icon: '💰', label: '儲值' },
-    { key: 'withdraw', icon: '💸', label: '提款' },
-    { key: 'games', icon: '🎰', label: '遊戲' },
-    { key: 'announcements', icon: '📢', label: '公告' },
-    { key: 'activities', icon: '🎁', label: '活動' },
-    { key: 'payment', icon: '💳', label: '付款' },
-    { key: 'security', icon: '🔐', label: '安全' },
-    { key: 'system', icon: '⚙️', label: '系統' },
-  ]
-
-  const renderContent = () => {
-    switch (tab) {
-      case 'dashboard':     return <DashboardTab showMsg={showMsg} />
-      case 'users':         return <UsersTab showMsg={showMsg} />
-      case 'recharge':      return <RechargeTab showMsg={showMsg} />
-      case 'withdraw':      return <WithdrawTab showMsg={showMsg} />
-      case 'games':         return <GameSettingsTab showMsg={showMsg} />
-      case 'announcements': return <AnnouncementsTab showMsg={showMsg} />
-      case 'activities':    return <ActivitiesTab showMsg={showMsg} />
-      case 'payment':       return <PaymentTab showMsg={showMsg} />
-      case 'security':      return <SecurityTab showMsg={showMsg} />
-      case 'system':        return <SystemTab showMsg={showMsg} />
-      default:              return null
-    }
-  }
+  const menu = MENU.find(m => m.key === active);
+  const PageComp = PAGE_COMPONENTS[active];
 
   return (
-    <div style={{ minHeight: '100vh', background: BG, paddingBottom: 80 }}>
-      <Toast msg={toast.msg} type={toast.type} />
+    <div style={{
+      display: 'flex', height: '100vh', background: C.bg,
+      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+      color: C.text, overflow: 'hidden',
+    }}>
 
-      {/* 頂部標題 */}
+      {/* ── Sidebar ─────────────────────────────────────────────────────────── */}
       <div style={{
-        background: `linear-gradient(135deg, #0a0e1a, #111827)`,
-        borderBottom: `1px solid ${GOLD}33`,
-        padding: '60px 16px 16px',
-        textAlign: 'center',
-        position: 'sticky', top: 0, zIndex: 100
+        width: collapsed ? 60 : 230,
+        background: C.sidebar,
+        display: 'flex', flexDirection: 'column',
+        transition: 'width .2s',
+        flexShrink: 0,
+        borderRight: `1px solid ${C.border}44`,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
-          <span style={{ fontSize: 22 }}>⚙️</span>
-          <h2 style={{ color: GOLD, margin: 0, fontSize: 20, fontWeight: 'bold' }}>後台管理系統</h2>
+        {/* Logo */}
+        <div style={{
+          padding: collapsed ? '20px 0' : '20px 20px',
+          display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'space-between',
+          borderBottom: `1px solid ${C.border}44`,
+          height: 64, boxSizing: 'border-box',
+        }}>
+          {!collapsed && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{
+                width: 32, height: 32, borderRadius: 8,
+                background: `linear-gradient(135deg, ${C.primary}, #818cf8)`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 16, fontWeight: 700, color: C.white, flexShrink: 0,
+              }}>🎰</div>
+              <div>
+                <div style={{ color: C.white, fontWeight: 700, fontSize: 14, lineHeight: 1 }}>Casino</div>
+                <div style={{ color: C.textMuted, fontSize: 10, marginTop: 2 }}>Admin Panel</div>
+              </div>
+            </div>
+          )}
+          {collapsed && (
+            <div style={{
+              width: 32, height: 32, borderRadius: 8,
+              background: `linear-gradient(135deg, ${C.primary}, #818cf8)`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 16,
+            }}>🎰</div>
+          )}
+          <button
+            onClick={() => setCollapsed(c => !c)}
+            style={{
+              background: 'none', border: 'none', color: C.textMuted,
+              cursor: 'pointer', fontSize: 16, padding: 4, lineHeight: 1,
+              ...(collapsed ? { position: 'absolute', left: 40, top: 20 } : {}),
+            }}
+          >{collapsed ? '›' : '‹'}</button>
         </div>
-        <p style={{ color: '#666', fontSize: 12, margin: '4px 0 0' }}>
-          管理員：{user?.username} · {new Date().toLocaleDateString('zh-TW')}
-        </p>
-      </div>
 
-      {/* Tab 導航 - 橫向捲動 */}
-      <div style={{
-        display: 'flex', overflowX: 'auto', gap: 0,
-        background: BG2, borderBottom: `1px solid #1e2d45`,
-        padding: '0 8px',
-        scrollbarWidth: 'none',
-        WebkitOverflowScrolling: 'touch',
-      }}>
-        {TABS.map(t => (
-          <button key={t.key} onClick={() => setTab(t.key)} style={{
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
-            padding: '10px 14px', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
-            background: 'transparent', flexShrink: 0,
-            color: tab === t.key ? GOLD : '#555',
-            borderBottom: `2px solid ${tab === t.key ? GOLD : 'transparent'}`,
-            fontSize: 11, fontWeight: tab === t.key ? 'bold' : 'normal',
-            transition: 'all 0.2s',
+        {/* Nav */}
+        <nav style={{ flex: 1, overflowY: 'auto', padding: '8px 0' }}>
+          {MENU.map(item => {
+            const isActive = active === item.key;
+            return (
+              <button
+                key={item.key}
+                onClick={() => setActive(item.key)}
+                title={collapsed ? item.label : undefined}
+                style={{
+                  display: 'flex', alignItems: 'center',
+                  gap: collapsed ? 0 : 10,
+                  width: '100%', padding: collapsed ? '10px 0' : '10px 20px',
+                  justifyContent: collapsed ? 'center' : 'flex-start',
+                  background: isActive ? `${C.primary}22` : 'none',
+                  border: 'none',
+                  borderLeft: isActive ? `3px solid ${C.primary}` : '3px solid transparent',
+                  color: isActive ? C.primary : C.textMuted,
+                  cursor: 'pointer', fontSize: 13, fontWeight: isActive ? 600 : 400,
+                  transition: 'all .1s', textAlign: 'left',
+                  position: 'relative',
+                }}
+                onMouseEnter={e => !isActive && (e.currentTarget.style.background = '#ffffff08')}
+                onMouseLeave={e => !isActive && (e.currentTarget.style.background = 'none')}
+              >
+                <span style={{ fontSize: 16, flexShrink: 0 }}>{item.icon}</span>
+                {!collapsed && <span style={{ flex: 1 }}>{item.label}</span>}
+                {!collapsed && item.badge && (
+                  <span style={{
+                    background: C.danger, color: C.white,
+                    borderRadius: 10, fontSize: 10, fontWeight: 700,
+                    padding: '1px 6px', lineHeight: '16px',
+                  }}>{item.badge}</span>
+                )}
+                {collapsed && item.badge && (
+                  <span style={{
+                    position: 'absolute', top: 6, right: 10,
+                    background: C.danger, color: C.white,
+                    borderRadius: '50%', width: 14, height: 14,
+                    fontSize: 9, fontWeight: 700,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>{item.badge}</span>
+                )}
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* User Info */}
+        {!collapsed && (
+          <div style={{
+            padding: '12px 16px',
+            borderTop: `1px solid ${C.border}44`,
+            display: 'flex', alignItems: 'center', gap: 10,
           }}>
-            <span style={{ fontSize: 18 }}>{t.icon}</span>
-            <span>{t.label}</span>
-          </button>
-        ))}
+            <div style={{
+              width: 32, height: 32, borderRadius: '50%',
+              background: `linear-gradient(135deg, ${C.primary}, ${C.success})`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: C.white, fontWeight: 700, fontSize: 14, flexShrink: 0,
+            }}>A</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ color: C.text, fontSize: 12, fontWeight: 600 }}>Admin</div>
+              <div style={{ color: C.textMuted, fontSize: 10 }}>超級管理員</div>
+            </div>
+            <button style={{ background: 'none', border: 'none', color: C.textMuted, cursor: 'pointer', fontSize: 14 }}
+              title="登出">⏻</button>
+          </div>
+        )}
       </div>
 
-      {/* 內容區 */}
-      <div style={{ padding: '16px 16px 40px', maxWidth: 700, margin: '0 auto' }}>
-        {renderContent()}
+      {/* ── Main ────────────────────────────────────────────────────────────── */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+
+        {/* Header */}
+        <div style={{
+          height: 64, padding: '0 24px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          background: C.sidebar, borderBottom: `1px solid ${C.border}44`,
+          flexShrink: 0,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ color: C.textMuted, fontSize: 12 }}>管理後台</span>
+            <span style={{ color: C.textDim, fontSize: 12 }}>›</span>
+            <span style={{ color: C.text, fontSize: 12, fontWeight: 500 }}>{menu?.label}</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{
+              background: C.success + '22', color: C.success,
+              borderRadius: 20, padding: '4px 12px', fontSize: 11, fontWeight: 600,
+              display: 'flex', alignItems: 'center', gap: 4,
+            }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: C.success, display: 'inline-block' }} />
+              系統正常
+            </div>
+            <div style={{ color: C.textMuted, fontSize: 12 }}>
+              {new Date().toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' })}
+            </div>
+            <button style={{ background: 'none', border: 'none', color: C.textMuted, cursor: 'pointer', fontSize: 18 }}
+              title="通知">🔔</button>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
+          <PageComp />
+        </div>
       </div>
     </div>
-  )
+  );
 }
