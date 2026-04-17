@@ -355,9 +355,10 @@ def send_otp(req: SendOtpReq, db: Session = Depends(get_db)):
     u.otp_code    = code
     u.otp_expires = expires
     db.commit()
-    # 實際環境應發 SMS；這裡只存 DB，管理員後台可查看
+    # 自動模式：直接回傳 OTP 碼，前端自動填入並完成驗證
     return {"message": f"驗證碼已發送至 {phone[:4]}****{phone[-3:]}",
-            "expires_in": OTP_EXPIRE * 60}
+            "expires_in": OTP_EXPIRE * 60,
+            "auto_otp": code}
 
 @app.post("/auth/verify-otp")
 def verify_otp(req: VerifyOtpReq, db: Session = Depends(get_db)):

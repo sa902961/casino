@@ -34,9 +34,16 @@ export default function LoginPage() {
     setLoading(true)
     setError('')
     try {
-      await authAPI.sendOtp(phone)
+      const res = await authAPI.sendOtp(phone)
+      // 自動填入 OTP 並直接登入
+      const autoCode = res.auto_otp
+      setOtp(autoCode)
       setOtpSent(true)
-      setSuccess('OTP 已發送！（測試碼：123456）')
+      setSuccess('⚡ 驗證碼已自動填入，正在登入...')
+      // 直接自動驗證
+      const data = await authAPI.verifyOtp(phone, autoCode)
+      login(data.token, data.user)
+      setSuccess('✅ 登入成功！')
     } catch (err) {
       setError(err.message)
     } finally {
@@ -111,19 +118,21 @@ export default function LoginPage() {
             <div style={{ display:'flex', gap:8, marginBottom:12 }}>
               <input style={{ ...inputStyle, marginBottom:0, flex:1 }} placeholder="手機號碼 (e.g. 0912345678)"
                 value={phone} onChange={e=>setPhone(e.target.value)} required />
-              <button type="button" onClick={handleSendOtp} disabled={loading || otpSent}
-                style={{ padding:'12px 16px', background:'#1565c0', color:'#fff',
-                  border:'none', borderRadius:10, cursor:'pointer', whiteSpace:'nowrap', fontSize:13 }}>
-                {otpSent ? '已發送' : '發送OTP'}
+              <button type="button" onClick={handleSendOtp} disabled={loading}
+                style={{ padding:'12px 16px', background: loading ? '#555' : '#1565c0', color:'#fff',
+                  border:'none', borderRadius:10, cursor: loading ? 'not-allowed' : 'pointer', whiteSpace:'nowrap', fontSize:13 }}>
+                {loading ? '驗證中...' : '⚡ 一鍵登入'}
               </button>
             </div>
             {otpSent && (
-              <input style={inputStyle} placeholder="輸入6位數OTP" value={otp}
-                onChange={e=>setOtp(e.target.value)} maxLength={6} required />
+              <input style={inputStyle} placeholder="6位數驗證碼（已自動填入）" value={otp}
+                onChange={e=>setOtp(e.target.value)} maxLength={6} />
             )}
-            <button type="submit" style={btnStyle} disabled={loading || !otpSent}>
-              {loading ? '驗證中...' : '📱 OTP 登入'}
-            </button>
+            {otpSent && (
+              <button type="submit" style={btnStyle} disabled={loading}>
+                {loading ? '驗證中...' : '📱 確認登入'}
+              </button>
+            )}
           </form>
         )}
 
