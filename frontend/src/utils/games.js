@@ -16,6 +16,7 @@ export const ALL_GAMES = [
   // ── 桌遊 ────────────────────────────────────
   { id:'baccarat',     name:'龍虎對決',   emoji:'🃏', cat:'table',   tags:['熱門','桌遊'],   badge:'hot',    desc:'百家樂，莊閒和' },
   { id:'blackjack',    name:'二十一爆破', emoji:'🂡', cat:'table',   tags:['桌遊'],          badge:'',       desc:'21點，超越莊家' },
+  { id:'sett',         name:'戰神賽特',   emoji:'⚔️', cat:'table',   tags:['熱門','桌遊'],   badge:'hot',    desc:'埃及戰神老虎機，WILD+免費旋轉' },
   { id:'poker',        name:'德州稱王',   emoji:'♠️', cat:'table',   tags:['熱門','桌遊'],   badge:'hot',    desc:'德州撲克，稱霸牌局' },
   { id:'roulette',     name:'幸運女神輪', emoji:'🎡', cat:'table',   tags:['桌遊'],          badge:'',       desc:'歐式輪盤' },
   { id:'threecards',   name:'三公對決',   emoji:'🂠', cat:'table',   tags:['桌遊'],          badge:'new',    desc:'三張牌比大小' },
