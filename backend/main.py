@@ -204,6 +204,11 @@ init_data()
 # 認證端點
 # ════════════════════════════════════════════════
 
+@app.get("/")
+def root():
+    return {"message": "城星娛樂城 API 運行中 🎰", "version": "1.0.0"}
+
+
 @app.post("/register")
 def register(req: RegisterReq, db: Session = Depends(get_db)):
     if len(req.username) < 3 or len(req.username) > 20:
